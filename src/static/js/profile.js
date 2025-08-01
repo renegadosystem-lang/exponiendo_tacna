@@ -1,8 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- INICIO DE LA ACTUALIZACIÓN ---
+    const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+    // --- FIN DE LA ACTUALIZACIÓN ---
+
     // --- 1. OBTENER DATOS Y AUTENTICACIÓN ---
     const token = localStorage.getItem('accessToken');
-    const pathParts = window.location.pathname.split('/');
-    const profileUsername = pathParts[pathParts.length - 1];
+    
+    // --- CAMBIO: Leer el username desde los parámetros de la URL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const profileUsername = urlParams.get('user');
+
+    if (!profileUsername) {
+        // Si no hay un usuario en la URL, no se puede cargar el perfil.
+        document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1><p>Asegúrate de que la URL sea correcta.</p></div>`;
+        return;
+    }
 
     let currentUserId = null;
     if (token) {
@@ -29,7 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        return fetch(url, { ...options, headers });
+        // --- CAMBIO: Usar la URL completa ---
+        return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
     // --- 2. LÓGICA DE LA GALERÍA LIGHTBOX ---
@@ -47,7 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = `/uploads/${item.file_path}`;
+        // --- CAMBIO: Usar la URL completa ---
+        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
 
@@ -62,14 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewAlbumModal.style.display === 'block') {
             if (e.key === 'ArrowLeft') lightboxPrev.click();
             if (e.key === 'ArrowRight') lightboxNext.click();
-            // Hacemos que la tecla Escape haga clic en el botón de cerrar
             if (e.key === 'Escape') viewAlbumModal.querySelector('.close-button').click();
         }
     });
 
     const openAlbumViewer = async (albumId) => {
         try {
-            const response = await fetch(`/api/albums/${albumId}`);
+            // --- CAMBIO: Usar la URL completa ---
+            const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
             if (!response.ok) throw new Error('No se pudo cargar el álbum');
             const albumData = await response.json();
             
@@ -103,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.addEventListener('click', closeAction);
         }
         
-        // El lightbox no se debe cerrar al hacer clic afuera, los otros sí
         if (!modal.classList.contains('modal-lightbox')) {
             window.addEventListener('click', e => { if (e.target === modal) closeAction(); });
         }
@@ -112,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 4. CARGAR DATOS DEL PERFIL ---
     const loadProfileData = async () => {
         try {
-            const response = await fetch(`/api/profiles/${profileUsername}`);
+            // --- CAMBIO: Usar la URL completa ---
+            const response = await fetch(`${backendUrl}/api/profiles/${profileUsername}`);
             if (!response.ok) {
                 document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Usuario no encontrado</h1></div>`;
                 return;
@@ -126,8 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const defaultAvatar = '/static/img/placeholder-default.jpg';
             const defaultBanner = '/static/img/hero-background.jpg';
 
-            document.getElementById('profile-avatar').style.backgroundImage = `url('${profile.profile_picture_url || defaultAvatar}')`;
-            document.getElementById('profile-banner').style.backgroundImage = `url('${profile.banner_image_url || defaultBanner}')`;
+            // --- CAMBIO: Usar la URL completa para imágenes ---
+            document.getElementById('profile-avatar').style.backgroundImage = `url('${profile.profile_picture_url ? backendUrl + profile.profile_picture_url : defaultAvatar}')`;
+            document.getElementById('profile-banner').style.backgroundImage = `url('${profile.banner_image_url ? backendUrl + profile.banner_image_url : defaultBanner}')`;
             
             const albumsGrid = document.getElementById('profile-albums-grid');
             albumsGrid.innerHTML = '';
@@ -135,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 profile.albums.forEach(album => {
                     albumsGrid.innerHTML += createAlbumCard(album);
                 });
-                // Añadir listeners a las nuevas tarjetas de álbum
                 albumsGrid.querySelectorAll('.album-card-link').forEach(link => {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -158,7 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album) => {
-        const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
+        // --- CAMBIO: Usar la URL completa para miniaturas ---
+        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
         return `
             <a href="#" class="album-card-link" data-album-id="${album.id}">
                 <div class="album-card">
@@ -174,28 +189,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 5. LÓGICA PARA DUEÑOS DEL PERFIL Y VISITANTES ---
     const setupOwnerControls = (profile) => {
         document.getElementById('profile-nav').innerHTML = `
-            <a href="/dashboard" class="btn btn-primary">Mi Dashboard</a>
+            <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
             <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>`;
         document.getElementById('logout-btn').addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.clear();
-            window.location.href = '/';
+            window.location.href = '/index.html';
         });
 
         ['profile-owner-avatar-controls', 'profile-owner-banner-controls', 'edit-bio-btn'].forEach(id => {
             document.getElementById(id).style.display = 'flex';
         });
         
+        const bioModal = document.getElementById('edit-bio-modal');
         const bioForm = document.getElementById('edit-bio-form');
         bioForm.bio.value = profile.bio;
-        // Inicializamos el modal de la biografía aquí, cuando sabemos que el botón existe
-        setupModal(editBioModal, document.getElementById('edit-bio-btn'));
+        setupModal(bioModal, document.getElementById('edit-bio-btn'));
         
         bioForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const response = await fetchWithAuth('/api/my-profile', { method: 'PUT', body: JSON.stringify({ bio: e.target.bio.value }) });
             if(response.ok) {
-                editBioModal.style.display = 'none';
+                bioModal.style.display = 'none';
                 loadProfileData();
             }
         });
@@ -237,22 +252,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const setupVisitorNav = () => {
         if (token) {
              document.getElementById('profile-nav').innerHTML = `
-                <a href="/dashboard" class="btn btn-primary">Mi Dashboard</a>
+                <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
                 <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>`;
              document.getElementById('logout-btn').addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.clear();
-                window.location.href = '/';
+                window.location.href = '/index.html';
             });
         } else {
             document.getElementById('profile-nav').innerHTML = `
-                <a href="/#registro" class="btn btn-primary">Crear Cuenta</a>
-                <a href="/#login" class="btn btn-secondary">Iniciar Sesión</a>`;
+                <a href="/index.html#registro" class="btn btn-primary">Crear Cuenta</a>
+                <a href="/index.html#login" class="btn btn-secondary">Iniciar Sesión</a>`;
         }
     };
     
     // --- INVOCACIÓN INICIAL ---
-    // Llamamos a setupModal para el visor aquí, para asegurarnos de que siempre esté activo
     setupModal(viewAlbumModal);
     loadProfileData();
 });
