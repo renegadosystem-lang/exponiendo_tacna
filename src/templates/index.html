@@ -220,7 +220,7 @@
                         if (ok) {
                             localStorage.setItem('accessToken', data.access_token);
                             localStorage.setItem('username', data.username);
-                            window.location.href = '/dashboard';
+                            window.location.href = '/dashboard.html';
                         } else {
                             showError(errorMessageDiv, data.error || 'Ocurrió un error inesperado.');
                         }
@@ -285,7 +285,7 @@
                                 <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                                 <div class="album-info">
                                     <h3>${album.title}</h3>
-                                    <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                                    <p>por: <a href="/profile.html?user=${album.owner_username}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
                                     <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
                                 </div>`;
                             gridContainer.appendChild(albumCard);
@@ -314,3 +314,4 @@
 </body>
 </html>
 <p>Me exímo de responsabilidad penal por el contenido subido por los usuarios. El uso de este sitio implica la aceptación de los términos y condiciones. Si eres agente de la ley y quieres contactarte conmigo mi usuario de instagram esta en el apartado "Contacto"</p>
+
