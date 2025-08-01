@@ -155,6 +155,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar todas las funcionalidades
+            const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
             setupModals();
             setupForms();
             loadMostViewedAlbums();
@@ -210,7 +211,7 @@
                     const username = e.target.username.value;
                     const password = e.target.password.value;
 
-                    fetch('https://exponiendo-tacna-api2.onrender.com/api/login', {
+                    fetch(`${backendUrl}/api/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
@@ -241,7 +242,7 @@
                     const email = e.target.email.value;
                     const password = e.target.password.value;
 
-                    fetch('https://exponiendo-tacna-api2.onrender.com/api/register', {
+                    fetch(`${backendUrl}/api/register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, email, password })
@@ -266,7 +267,7 @@
         // --- LÓGICA PARA CARGAR ÁLBUMES ---
         function loadMostViewedAlbums() {
             const gridContainer = document.getElementById('album-grid-container');
-            const apiUrl = 'https://exponiendo-tacna-api2.onrender.com/api/albums?sort_by=views_count&sort_order=desc&per_page=4';
+            const apiUrl = `${backendUrl}/api/albums?sort_by=views_count&sort_order=desc&per_page=4`;
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) throw new Error('Error de red');
@@ -314,4 +315,5 @@
 </body>
 </html>
 <p>Me exímo de responsabilidad penal por el contenido subido por los usuarios. El uso de este sitio implica la aceptación de los términos y condiciones. Si eres agente de la ley y quieres contactarte conmigo mi usuario de instagram esta en el apartado "Contacto"</p>
+
 
