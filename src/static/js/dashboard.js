@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
     // --- 1. VERIFICACIÓN DE AUTENTICACIÓN Y VARIABLES ---
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
@@ -74,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = `/uploads/${item.file_path}`;
+        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openAlbumViewer = async (albumId) => {
         try {
-            const response = await fetch(`/api/albums/${albumId}`);
+            const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
             if (!response.ok) throw new Error('No se pudo cargar el álbum');
             const albumData = await response.json();
             
@@ -123,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadMyAlbums();
         }
         try {
-            const response = await fetch(`/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
+            const response = await fetch(`${backendUrl}/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
             if (!response.ok) throw new Error('No se pudieron cargar los álbumes.');
             const data = await response.json();
             exploreGrid.innerHTML = '';
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMyAlbums = async () => {
         myAlbumsGrid.innerHTML = '<p>Cargando tus álbumes...</p>';
         try {
-            const response = await fetch(`/api/albums`);
+            const response = await fetch(`${backendUrl}/api/albums`);
             if (!response.ok) throw new Error('No se pudieron cargar tus álbumes.');
             const { albums } = await response.json();
             const userAlbums = albums.filter(album => album.user_id === currentUserId);
@@ -161,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album, isOwner) => {
-        const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
+        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/img/placeholder-default.jpg';
+        const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
                 <button class="btn-control upload" data-album-id="${album.id}" data-album-title="${album.title}">Añadir</button>
