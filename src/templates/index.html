@@ -209,8 +209,8 @@
                     errorMessageDiv.style.display = 'none';
                     const username = e.target.username.value;
                     const password = e.target.password.value;
-                    
-                    fetch('/api/login', {
+
+                    fetch('https://exponiendo-tacna-api2.onrender.com/api/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
@@ -241,7 +241,7 @@
                     const email = e.target.email.value;
                     const password = e.target.password.value;
 
-                    fetch('/api/register', {
+                    fetch('https://exponiendo-tacna-api2.onrender.com/api/register', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, email, password })
@@ -266,7 +266,7 @@
         // --- LÓGICA PARA CARGAR ÁLBUMES ---
         function loadMostViewedAlbums() {
             const gridContainer = document.getElementById('album-grid-container');
-            const apiUrl = '/api/albums?sort_by=views_count&sort_order=desc&per_page=4';
+            const apiUrl = 'https://exponiendo-tacna-api2.onrender.com/api/albums?sort_by=views_count&sort_order=desc&per_page=4';
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) throw new Error('Error de red');
@@ -276,14 +276,16 @@
                     gridContainer.innerHTML = '';
                     if (data.albums && data.albums.length > 0) {
                         data.albums.forEach(album => {
-                            const thumbnailUrl = album.thumbnail_url || "{{ url_for('static', filename='img/placeholder-default.jpg') }}";
+                            const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+                            const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/img/placeholder-default.jpg';
+                            const profileUrl = `/profile.html?user=${album.owner_username}`;
                             const albumCard = document.createElement('div');
                             albumCard.className = 'album-card';
                             albumCard.innerHTML = `
                                 <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                                 <div class="album-info">
                                     <h3>${album.title}</h3>
-                                    <p>por: <a href="/profile/${album.owner_username}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                                    <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
                                     <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
                                 </div>`;
                             gridContainer.appendChild(albumCard);
