@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Exponiendo Tacna</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <a href="#" id="my-profile-link" class="btn btn-secondary">Mi Perfil</a>
+                <button id="create-album-btn" class="btn btn-primary">Crear Álbum</button>
+                <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <div class="tabs">
+                <button class="tab-link active" data-tab="explore">Explorar Comunidad</button>
+                <button class="tab-link" data-tab="my-albums">Mis Álbumes</button>
+            </div>
+
+            <div id="explore" class="tab-content active">
+                <h2 class="section-title">Álbumes Recientes de la Comunidad</h2>
+                <div id="explore-grid" class="album-grid"></div>
+                <div id="pagination-controls" class="pagination-controls"></div>
+            </div>
+
+            <div id="my-albums" class="tab-content">
+                <h2 class="section-title">Mis Álbumes Creados</h2>
+                <div id="my-albums-grid" class="album-grid"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="view-album-modal" class="modal modal-lightbox">
+        <span class="close-button lightbox-close">&times;</span>
+        <button class="lightbox-nav prev" id="lightbox-prev">&#10094;</button>
+        <div class="lightbox-content">
+            </div>
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+        <button class="lightbox-nav next" id="lightbox-next">&#10095;</button>
+    </div>
+    <div id="edit-album-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Editar Álbum</h2>
+            <form id="edit-album-form">
+                <div class="form-error-message"></div>
+                <input type="text" name="title" placeholder="Título del álbum" required>
+                <textarea name="description" placeholder="Descripción (opcional)" rows="4"></textarea>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="create-album-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Crear Nuevo Álbum</h2>
+            <form id="create-album-form">
+                <div class="form-error-message"></div>
+                <input type="text" name="title" placeholder="Título del álbum" required>
+                <textarea name="description" placeholder="Descripción (opcional)" rows="4"></textarea>
+                <button type="submit" class="btn btn-primary">Crear</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="upload-media-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="upload-modal-title">Subir Archivos</h2>
+            <form id="upload-media-form">
+                <div class="form-error-message"></div>
+                
+                <label for="file-upload-input" class="btn btn-secondary custom-file-upload">
+                    Seleccionar Archivos...
+                </label>
+                <input id="file-upload-input" type="file" name="file" required multiple>
+                <span id="file-upload-filename" class="file-upload-status"></span>
+
+                <input type="text" name="title" placeholder="Título (para todos los archivos)">
+                <textarea name="description" placeholder="Descripción (para todos los archivos)"></textarea>
+                <input type="text" name="tags" placeholder="Etiquetas (para todos los archivos)">
+                <button type="submit" class="btn btn-primary">Subir</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
