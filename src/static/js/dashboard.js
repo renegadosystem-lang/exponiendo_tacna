@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
-    if (myProfileLink) myProfileLink.href = `/profile/${username}`;
+    if (myProfileLink) myProfileLink.href = `/profile.html?user=${username}`;
 
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentUserId = parseInt(payload.sub, 10);
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                 <div class="album-info">
                     <h3>${album.title}</h3>
-                    <p>por: <a href="/profile/${album.owner_username}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                    <p>por: <a href="/profile.html?user=${album.owner_username}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
                     <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
                 </div>
                 ${ownerControls}
@@ -382,8 +382,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); 
         localStorage.removeItem('accessToken');
         localStorage.removeItem('username');
-        window.location.href = '/'; 
+        window.location.href = '/index.html'; 
     });
     
     loadAlbums(1);
 });
+
