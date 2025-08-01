@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        return fetch(url, { ...options, headers });
+        return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
     // --- 4. LÓGICA DE PESTAÑAS ---
@@ -387,4 +387,5 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
+
 
