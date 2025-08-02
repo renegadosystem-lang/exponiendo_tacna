@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const myProfileLink = document.getElementById('my-profile-link');
     if (myProfileLink) {
-        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
         myProfileLink.href = `/profile.html?user=${username}`;
     }
 
@@ -165,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createAlbumCard = (album, isOwner) => {
         const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
-        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -222,12 +220,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- LÓGICA DE EVENTOS (UNIFICADA) ---
+    // --- 8. GESTIÓN DE MODALES ---
+    const modals = { 
+        create: document.getElementById('create-album-modal'), 
+        edit: document.getElementById('edit-album-modal'), 
+        upload: document.getElementById('upload-media-modal'), 
+        view: viewAlbumModal 
+    };
+
+    // --- 9. LÓGICA DE EVENTOS (Delegación de Clics - CORREGIDA) ---
     let currentAlbumId = null;
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
         
-        // Abrir modales
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Si el clic fue en un enlace de perfil, no hacemos nada y dejamos que el navegador navegue.
+        if (target.closest('.profile-link')) {
+            return;
+        }
+        // --- FIN DE LA CORRECCIÓN ---
+        
         if (target.matches('#create-album-btn')) {
             modals.create.classList.add('is-visible');
         } else if (target.matches('.btn-control.upload')) {
@@ -241,13 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
             form.description.value = target.dataset.albumDescription;
             modals.edit.classList.add('is-visible');
         } 
-        // Cerrar modales
         else if (target.matches('.close-button')) {
             target.closest('.modal').classList.remove('is-visible');
         } else if (target.matches('.modal.is-visible') && !target.closest('.modal-content')) {
              target.classList.remove('is-visible');
         }
-        // Acciones de borrado
         else if (target.matches('.btn-control.delete')) {
             currentAlbumId = target.dataset.albumId;
             if (confirm('¿Estás seguro de que quieres eliminar este álbum y todo su contenido?')) {
@@ -267,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } 
-        // Abrir visor de galería
         else {
             const albumCard = target.closest('.album-card');
             if (albumCard && !target.closest('.album-owner-controls')) {
@@ -277,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
     // --- 10. LÓGICA DE FORMULARIOS ---
     const handleFormSubmit = async (form, url, method, isFormData = false) => {
         const errorDiv = form.querySelector('.form-error-message');
@@ -399,5 +409,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
-
-
