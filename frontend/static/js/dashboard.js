@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
     if (!token || !username) {
-        window.location.href = '/index.html'; // Corregido para Netlify
+        window.location.href = '/index.html'; // Redirige a index.html
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
@@ -234,7 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.matches('.close-button')) {
             e.target.closest('.modal').classList.remove('is-visible');
         } else if (e.target.matches('.modal.is-visible')) {
-            e.target.classList.remove('is-visible');
+            if (!e.target.classList.contains('modal-lightbox')) {
+                e.target.classList.remove('is-visible');
+            }
         }
     });
     
