@@ -1,13 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // La URL de tu backend en Render
+    const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+
     // --- 1. VERIFICACIÓN DE AUTENTICACIÓN Y VARIABLES ---
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
     if (!token || !username) {
-        window.location.href = '/index.html';
+        window.location.href = '/index.html'; // Corregido para Netlify
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
-    if (myProfileLink) myProfileLink.href = `/profile.html?user=${username}`;
+    if (myProfileLink) {
+        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
+        myProfileLink.href = `/profile.html?user=${username}`;
+    }
 
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentUserId = parseInt(payload.sub, 10);
@@ -36,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
         return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
@@ -75,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = `https://exponiendo-tacna-api2.onrender.com/uploads/${item.file_path}`;
+        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
@@ -97,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openAlbumViewer = async (albumId) => {
         try {
-            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums/${albumId}`);
+            const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
             if (!response.ok) throw new Error('No se pudo cargar el álbum');
             const albumData = await response.json();
             
@@ -116,11 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 6. LÓGICA DE CARGA DE ÁLBUMES ---
     const loadAlbums = async (page = 1) => {
+        exploreGrid.innerHTML = '<p>Cargando álbumes...</p>';
         if (page === 1) {
             loadMyAlbums();
         }
         try {
-            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
+            const response = await fetch(`${backendUrl}/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
             if (!response.ok) throw new Error('No se pudieron cargar los álbumes.');
             const data = await response.json();
             exploreGrid.innerHTML = '';
@@ -140,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMyAlbums = async () => {
         myAlbumsGrid.innerHTML = '<p>Cargando tus álbumes...</p>';
         try {
-            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums`);
+            const response = await fetch(`${backendUrl}/api/albums`);
             if (!response.ok) throw new Error('No se pudieron cargar tus álbumes.');
             const { albums } = await response.json();
             const userAlbums = albums.filter(album => album.user_id === currentUserId);
@@ -158,8 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album, isOwner) => {
-        const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
         const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -224,10 +230,11 @@ document.addEventListener('DOMContentLoaded', () => {
         view: viewAlbumModal 
     };
 
-    // Un solo listener para cerrar todos los modales
-    document.addEventListener('click', (e) => {
+    document.body.addEventListener('click', (e) => {
         if (e.target.matches('.close-button')) {
             e.target.closest('.modal').classList.remove('is-visible');
+        } else if (e.target.matches('.modal.is-visible')) {
+            e.target.classList.remove('is-visible');
         }
     });
     
@@ -235,7 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAlbumId = null;
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
-        if (target.matches('.btn-control.upload')) {
+        if (target.matches('#create-album-btn')) {
+            modals.create.classList.add('is-visible');
+        } else if (target.matches('.btn-control.upload')) {
             currentAlbumId = target.dataset.albumId;
             document.getElementById('upload-modal-title').textContent = `Subir a: ${target.dataset.albumTitle}`;
             modals.upload.classList.add('is-visible');
@@ -390,15 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', (e) => { 
         e.preventDefault(); 
         localStorage.clear();
+        // --- CORRECCIÓN: Apunta a index.html ---
         window.location.href = '/index.html'; 
-    });
-    
-    // --- Inicialización ---
-    document.getElementById('create-album-btn').addEventListener('click', () => {
-        modals.create.classList.add('is-visible');
-    });
-    viewAlbumModal.querySelector('.close-button').addEventListener('click', () => {
-        viewAlbumModal.classList.remove('is-visible');
     });
     
     loadAlbums(1);
