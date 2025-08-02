@@ -1,19 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // La URL de tu backend en Render
-    const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-
     // --- 1. VERIFICACIÓN DE AUTENTICACIÓN Y VARIABLES ---
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
     if (!token || !username) {
-        window.location.href = '/index.html'; // Redirige a index.html
+        window.location.href = '/index.html';
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
-    if (myProfileLink) {
-        // --- CAMBIO: Apunta a profile.html con el parámetro correcto ---
-        myProfileLink.href = `/profile.html?user=${username}`;
-    }
+    if (myProfileLink) myProfileLink.href = `/profile.html?user=${username}`;
 
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentUserId = parseInt(payload.sub, 10);
@@ -42,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
+        const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
         return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
@@ -60,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 5. LÓGICA DE LA GALERÍA LIGHTBOX ---
     const showMediaAtIndex = (index) => {
         if (!currentAlbumMedia || currentAlbumMedia.length === 0) {
-            viewAlbumModal.style.display = 'none';
+            viewAlbumModal.classList.remove('is-visible');
             return;
         }
         if (index < 0 || index >= currentAlbumMedia.length) {
@@ -80,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
+        mediaElement.src = `https://exponiendo-tacna-api2.onrender.com/uploads/${item.file_path}`;
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
@@ -93,25 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
     lightboxNext.addEventListener('click', () => showMediaAtIndex(currentIndex + 1));
     
     document.addEventListener('keydown', (e) => {
-        if (viewAlbumModal.style.display === 'block') {
+        if (viewAlbumModal.classList.contains('is-visible')) {
             if (e.key === 'ArrowLeft') lightboxPrev.click();
             if (e.key === 'ArrowRight') lightboxNext.click();
-            if (e.key === 'Escape') {
-                const closeBtn = viewAlbumModal.querySelector('.close-button');
-                if (closeBtn) closeBtn.click();
-            }
+            if (e.key === 'Escape') viewAlbumModal.classList.remove('is-visible');
         }
     });
 
     const openAlbumViewer = async (albumId) => {
         try {
-            const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
+            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums/${albumId}`);
             if (!response.ok) throw new Error('No se pudo cargar el álbum');
             const albumData = await response.json();
             
             currentAlbumMedia = albumData.media || [];
             if (currentAlbumMedia.length > 0) {
-                viewAlbumModal.style.display = 'block';
+                viewAlbumModal.classList.add('is-visible');
                 showMediaAtIndex(0);
             } else {
                 alert('Este álbum está vacío.');
@@ -124,12 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 6. LÓGICA DE CARGA DE ÁLBUMES ---
     const loadAlbums = async (page = 1) => {
-        exploreGrid.innerHTML = '<p>Cargando álbumes...</p>';
         if (page === 1) {
             loadMyAlbums();
         }
         try {
-            const response = await fetch(`${backendUrl}/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
+            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
             if (!response.ok) throw new Error('No se pudieron cargar los álbumes.');
             const data = await response.json();
             exploreGrid.innerHTML = '';
@@ -149,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMyAlbums = async () => {
         myAlbumsGrid.innerHTML = '<p>Cargando tus álbumes...</p>';
         try {
-            const response = await fetch(`${backendUrl}/api/albums`);
+            const response = await fetch(`https://exponiendo-tacna-api2.onrender.com/api/albums`);
             if (!response.ok) throw new Error('No se pudieron cargar tus álbumes.');
             const { albums } = await response.json();
             const userAlbums = albums.filter(album => album.user_id === currentUserId);
@@ -167,8 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album, isOwner) => {
+        const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
         const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
-        // --- CAMBIO: Apunta a profile.html con el parámetro correcto ---
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -226,24 +217,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 8. GESTIÓN DE MODALES ---
-    const modals = { create: document.getElementById('create-album-modal'), edit: document.getElementById('edit-album-modal'), upload: document.getElementById('upload-media-modal'), view: viewAlbumModal };
-    const setupModal = (modal, openTriggerSelector) => {
-        if (!modal) return;
-        const closeBtn = modal.querySelector('.close-button');
-        if(closeBtn) {
-            closeBtn.addEventListener('click', () => modal.style.display = 'none');
-        }
-        if (openTriggerSelector) {
-            document.querySelector(openTriggerSelector).addEventListener('click', (e) => {
-                e.preventDefault();
-                modal.style.display = 'block';
-            });
-        }
-        if (!modal.classList.contains('modal-lightbox')) {
-            window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-        }
+    const modals = { 
+        create: document.getElementById('create-album-modal'), 
+        edit: document.getElementById('edit-album-modal'), 
+        upload: document.getElementById('upload-media-modal'), 
+        view: viewAlbumModal 
     };
-    Object.keys(modals).forEach(key => setupModal(modals[key], key === 'create' ? '#create-album-btn' : null));
+
+    // Un solo listener para cerrar todos los modales
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('.close-button')) {
+            e.target.closest('.modal').classList.remove('is-visible');
+        }
+    });
     
     // --- 9. LÓGICA DE EVENTOS (Delegación de Clics) ---
     let currentAlbumId = null;
@@ -252,13 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('.btn-control.upload')) {
             currentAlbumId = target.dataset.albumId;
             document.getElementById('upload-modal-title').textContent = `Subir a: ${target.dataset.albumTitle}`;
-            modals.upload.style.display = 'block';
+            modals.upload.classList.add('is-visible');
         } else if (target.matches('.btn-control.edit')) {
             currentAlbumId = target.dataset.albumId;
             const form = modals.edit.querySelector('form');
             form.title.value = target.dataset.albumTitle;
             form.description.value = target.dataset.albumDescription;
-            modals.edit.style.display = 'block';
+            modals.edit.classList.add('is-visible');
         } else if (target.matches('.btn-control.delete')) {
             currentAlbumId = target.dataset.albumId;
             if (confirm('¿Estás seguro de que quieres eliminar este álbum y todo su contenido?')) {
@@ -324,13 +310,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    modals.create.querySelector('form').addEventListener('submit', async (e) => { e.preventDefault(); const s = await handleFormSubmit(e.target, '/api/albums', 'POST'); if(s){modals.create.style.display='none';e.target.reset();await loadAlbums(1);} });
-    modals.edit.querySelector('form').addEventListener('submit', async (e) => { e.preventDefault(); const s = await handleFormSubmit(e.target, `/api/albums/${currentAlbumId}`, 'PUT'); if(s){modals.edit.style.display='none';e.target.reset();await loadAlbums(1);} });
+    document.getElementById('create-album-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const success = await handleFormSubmit(e.target, '/api/albums', 'POST');
+        if (success) {
+            modals.create.classList.remove('is-visible');
+            e.target.reset();
+            await loadAlbums(1);
+        }
+    });
+    document.getElementById('edit-album-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const success = await handleFormSubmit(e.target, `/api/albums/${currentAlbumId}`, 'PUT');
+        if (success) {
+            modals.edit.classList.remove('is-visible');
+            e.target.reset();
+            await loadAlbums(1);
+        }
+    });
     
     const uploadForm = document.getElementById('upload-media-form');
     const fileUploadInput = document.getElementById('file-upload-input');
     const fileUploadStatus = document.getElementById('file-upload-filename');
-
     if (fileUploadInput) {
         fileUploadInput.addEventListener('change', () => {
             if (fileUploadInput.files.length > 0) {
@@ -340,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     if (uploadForm) {
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alert('¡Todos los archivos se subieron con éxito!');
             }
-            modals.upload.style.display = 'none';
+            modals.upload.classList.remove('is-visible');
             uploadForm.reset();
             if (fileUploadStatus) fileUploadStatus.textContent = '';
         });
@@ -391,6 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); 
         localStorage.clear();
         window.location.href = '/index.html'; 
+    });
+    
+    // --- Inicialización ---
+    document.getElementById('create-album-btn').addEventListener('click', () => {
+        modals.create.classList.add('is-visible');
+    });
+    viewAlbumModal.querySelector('.close-button').addEventListener('click', () => {
+        viewAlbumModal.classList.remove('is-visible');
     });
     
     loadAlbums(1);
