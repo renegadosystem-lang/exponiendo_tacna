@@ -222,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    ```javascript
     // --- LÓGICA DE EVENTOS (UNIFICADA) ---
     let currentAlbumId = null;
     document.body.addEventListener('click', async (e) => {
@@ -278,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    ```
     // --- 10. LÓGICA DE FORMULARIOS ---
     const handleFormSubmit = async (form, url, method, isFormData = false) => {
         const errorDiv = form.querySelector('.form-error-message');
@@ -401,4 +399,5 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
+
 
