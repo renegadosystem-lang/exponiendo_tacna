@@ -1,14 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // La URL de tu backend en Render
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+
     // --- 1. VERIFICACIÓN DE AUTENTICACIÓN Y VARIABLES ---
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
     if (!token || !username) {
-        window.location.href = '/';
+        window.location.href = '/index.html'; // Redirige a index.html
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
-    if (myProfileLink) myProfileLink.href = `/profile/${username}`;
+    if (myProfileLink) {
+        // --- CAMBIO: Apunta a profile.html con el parámetro correcto ---
+        myProfileLink.href = `/profile.html?user=${username}`;
+    }
 
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentUserId = parseInt(payload.sub, 10);
@@ -37,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        return fetch(url, { ...options, headers });
+        return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
     // --- 4. LÓGICA DE PESTAÑAS ---
@@ -162,7 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album, isOwner) => {
-        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/img/placeholder-default.jpg';
+        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+        // --- CAMBIO: Apunta a profile.html con el parámetro correcto ---
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -175,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                 <div class="album-info">
                     <h3>${album.title}</h3>
-                    <p>por: <a href="/profile/${album.owner_username}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                    <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
                     <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
                 </div>
                 ${ownerControls}
@@ -228,7 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.addEventListener('click', () => modal.style.display = 'none');
         }
         if (openTriggerSelector) {
-            document.querySelector(openTriggerSelector).addEventListener('click', () => modal.style.display = 'block');
+            document.querySelector(openTriggerSelector).addEventListener('click', (e) => {
+                e.preventDefault();
+                modal.style.display = 'block';
+            });
         }
         if (!modal.classList.contains('modal-lightbox')) {
             window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
@@ -262,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(confirm('¿Seguro que quieres eliminar esta foto/video?')) {
                 const response = await fetchWithAuth(`/api/media/${mediaId}`, { method: 'DELETE' });
                 if(response.ok) {
-                    currentAlbumMedia = currentAlbumMedia.filter(item => item.id !== parseInt(mediaId));
+                    currentAlbumMedia = currentAlbumMedia.filter(item => item.id !== parseInt(mediaId, 10));
                     showMediaAtIndex(currentIndex);
                 } else {
                     alert('Error al eliminar el archivo.');
@@ -318,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
     modals.create.querySelector('form').addEventListener('submit', async (e) => { e.preventDefault(); const s = await handleFormSubmit(e.target, '/api/albums', 'POST'); if(s){modals.create.style.display='none';e.target.reset();await loadAlbums(1);} });
     modals.edit.querySelector('form').addEventListener('submit', async (e) => { e.preventDefault(); const s = await handleFormSubmit(e.target, `/api/albums/${currentAlbumId}`, 'PUT'); if(s){modals.edit.style.display='none';e.target.reset();await loadAlbums(1);} });
     
-    // --- Lógica de subida múltiple ---
     const uploadForm = document.getElementById('upload-media-form');
     const fileUploadInput = document.getElementById('file-upload-input');
     const fileUploadStatus = document.getElementById('file-upload-filename');
@@ -333,56 +341,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const errorDiv = uploadForm.querySelector('.form-error-message');
-        const submitButton = uploadForm.querySelector('button[type="submit"]');
-        errorDiv.style.display = 'none';
-        const files = fileUploadInput.files;
-        if (files.length === 0) {
-            errorDiv.textContent = 'Por favor, selecciona al menos un archivo.';
-            errorDiv.style.display = 'block';
-            return;
-        }
-        submitButton.disabled = true;
-        const title = e.target.title.value;
-        const description = e.target.description.value;
-        const tags = e.target.tags.value;
-        let uploadsFallidas = 0;
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            submitButton.textContent = `Subiendo ${i + 1} de ${files.length}...`;
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('title', title);
-            formData.append('description', description);
-            formData.append('tags', tags);
-            try {
-                const url = `/api/albums/${currentAlbumId}/media`;
-                const response = await fetchWithAuth(url, { method: 'POST', body: formData });
-                if (!response.ok) uploadsFallidas++;
-            } catch (error) {
-                uploadsFallidas++;
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = uploadForm.querySelector('.form-error-message');
+            const submitButton = uploadForm.querySelector('button[type="submit"]');
+            errorDiv.style.display = 'none';
+            const files = fileUploadInput.files;
+            if (files.length === 0) {
+                errorDiv.textContent = 'Por favor, selecciona al menos un archivo.';
+                errorDiv.style.display = 'block';
+                return;
             }
-        }
-        submitButton.textContent = 'Subir';
-        submitButton.disabled = false;
-        if (uploadsFallidas > 0) {
-            alert(`${uploadsFallidas} de ${files.length} archivos no se pudieron subir.`);
-        } else {
-            alert('¡Todos los archivos se subieron con éxito!');
-        }
-        modals.upload.style.display = 'none';
-        uploadForm.reset();
-        if (fileUploadStatus) fileUploadStatus.textContent = '';
-    });
+            submitButton.disabled = true;
+            const title = e.target.title.value;
+            const description = e.target.description.value;
+            const tags = e.target.tags.value;
+            let uploadsFallidas = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                submitButton.textContent = `Subiendo ${i + 1} de ${files.length}...`;
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('tags', tags);
+                try {
+                    const response = await fetchWithAuth(`/api/albums/${currentAlbumId}/media`, { method: 'POST', body: formData });
+                    if (!response.ok) uploadsFallidas++;
+                } catch (error) {
+                    uploadsFallidas++;
+                }
+            }
+            submitButton.textContent = 'Subir';
+            submitButton.disabled = false;
+            if (uploadsFallidas > 0) {
+                alert(`${uploadsFallidas} de ${files.length} archivos no se pudieron subir.`);
+            } else {
+                alert('¡Todos los archivos se subieron con éxito!');
+            }
+            modals.upload.style.display = 'none';
+            uploadForm.reset();
+            if (fileUploadStatus) fileUploadStatus.textContent = '';
+        });
+    }
     
     // --- 11. CERRAR SESIÓN Y LLAMADA INICIAL ---
     logoutBtn.addEventListener('click', (e) => { 
         e.preventDefault(); 
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('username');
-        window.location.href = '/'; 
+        localStorage.clear();
+        window.location.href = '/index.html'; 
     });
     
     loadAlbums(1);
