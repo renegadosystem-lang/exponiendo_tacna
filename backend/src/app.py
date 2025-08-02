@@ -1,6 +1,4 @@
-# C:\Exponiendo_Tacna\backend\src\app.py (Versión Final con Perfiles y Eliminación de Foto)
-
-from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime, timedelta
@@ -14,21 +12,13 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# --- Configuración de la Base de Datos ---
-# --- CAMBIO IMPORTANTE: Configuración de la Base de Datos para Producción ---
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgres://exponiendo_tacna:aHvr7SXZ1dDAoOa@exponiendo-tacna-db.flycast:5432/exponiendo_tacna?sslmode=disable')
-if DATABASE_URL is None:
-    # Configuración para desarrollo local si la variable no está presente
-    print("ADVERTENCIA: No se encontró DATABASE_URL, usando configuración local.")
-# --- Configuración de la Base de Datos (Versión para Fly.io) ---
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
+# --- Configuración de la Base de Datos (Corregida y Simplificada) ---
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if DATABASE_URL:
-    # Configuración para producción en Fly.io
+    # Configuración para producción (Render/Supabase)
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
     # Configuración para desarrollo local si la variable no está presente
@@ -41,29 +31,24 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
-# --- Configuración JWT ---
-app.config["JWT_SECRET_KEY"] = "tu-clave-secreta-jwt-muy-larga-y-unica-para-produccion-12345"
+# --- Configuración JWT y de Subida de Archivos ---
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secreta-de-desarrollo-muy-segura")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
-# --- Configuración para Subida de Archivos ---
-UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
 
 def allowed_file(filename):
-    """Verifica si la extensión del archivo está permitida."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # --- Modelos de Base de Datos ---
-
 class User(db.Model):
-    """Define el modelo de usuario."""
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -71,19 +56,12 @@ class User(db.Model):
     bio = db.Column(db.Text, nullable=True, default="¡Bienvenido a mi perfil!")
     profile_picture_path = db.Column(db.String(255), nullable=True)
     banner_image_path = db.Column(db.String(255), nullable=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     albums = db.relationship('Album', backref='owner', lazy=True, cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f'<User {self.username}>'
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    def set_password(self, password): self.password_hash = generate_password_hash(password)
+    def check_password(self, password): return check_password_hash(self.password_hash, password)
 
 class Album(db.Model):
-    """Define el modelo de álbum."""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -93,131 +71,84 @@ class Album(db.Model):
     media = db.relationship('Media', backref='album', lazy=True, cascade="all, delete-orphan")
     tags = db.relationship('Tag', secondary='album_tags', backref=db.backref('albums', lazy='dynamic'))
 
-    def __repr__(self):
-        return f'<Album {self.title}>'
-
 class Media(db.Model):
-    """Define el modelo de contenido multimedia (fotos/videos)."""
     id = db.Column(db.Integer, primary_key=True)
     file_path = db.Column(db.String(255), nullable=False)
     file_type = db.Column(db.String(50), nullable=False)
-    thumbnail_path = db.Column(db.String(255), nullable=True)
     views_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     album_id = db.Column(db.Integer, db.ForeignKey('album.id'), nullable=False)
     title = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
+    tags = db.relationship('Tag', secondary='media_tags', backref=db.backref('media_items', lazy='dynamic'))
 
-    def __repr__(self):
-        return f'<Media {self.file_path}>'
-
-media_tags = db.Table('media_tags',
-    db.Column('media_id', db.Integer, db.ForeignKey('media.id'), primary_key=True),
-    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
-)
-
-album_tags = db.Table('album_tags',
-    db.Column('album_id', db.Integer, db.ForeignKey('album.id'), primary_key=True),
-    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
-)
-
+media_tags = db.Table('media_tags', db.Column('media_id', db.Integer, db.ForeignKey('media.id'), primary_key=True), db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True))
+album_tags = db.Table('album_tags', db.Column('album_id', db.Integer, db.ForeignKey('album.id'), primary_key=True), db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True))
 class Tag(db.Model):
-    """Define el modelo de Tag (Etiqueta)."""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
-    def __repr__(self):
-        return f'<Tag {self.name}>'
-
-Media.tags = db.relationship('Tag', secondary=media_tags, backref=db.backref('media_items', lazy='dynamic'))
-
-# --- Rutas de la App (Vistas HTML) ---
-# --- INICIO DEL CÓDIGO AÑADIDO ---
-# Esta función creará las tablas de la base de datos si no existen.
-def create_tables():
-    with app.app_context():
-        print("Creando tablas de la base de datos...")
-        db.create_all()
-        print("Tablas creadas exitosamente.")
-        
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+# --- Creación de Tablas ---
+with app.app_context():
+    db.create_all()
 
 # --- Rutas de API ---
 
-## Rutas de Autenticación
-
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+## Rutas de Autenticación y Perfil
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
-    if not data or not 'username' in data or not 'email' in data or not 'password' in data:
-        return jsonify({'error': 'Faltan datos de registro (username, email, password)'}), 400
+    if not all(key in data for key in ['username', 'email', 'password']):
+        return jsonify({'error': 'Faltan datos de registro'}), 400
     if User.query.filter_by(username=data['username']).first():
         return jsonify({'error': 'El nombre de usuario ya existe'}), 409
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'El email ya está registrado'}), 409
-    try:
-        new_user = User(username=data['username'], email=data['email'])
-        new_user.set_password(data['password'])
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({'message': 'Usuario registrado exitosamente', 'user_id': new_user.id}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+    
+    new_user = User(username=data['username'], email=data['email'])
+    new_user.set_password(data['password'])
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
 @app.route('/api/login', methods=['POST'])
 def login_user():
     data = request.get_json()
-    username = data.get('username', None)
-    password = data.get('password', None)
-    user = User.query.filter_by(username=username).first()
-    if user and user.check_password(password):
+    user = User.query.filter_by(username=data.get('username')).first()
+    if user and user.check_password(data.get('password')):
         access_token = create_access_token(identity=str(user.id))
-        # --- CAMBIO IMPORTANTE: Devolvemos el username para usarlo en el frontend ---
         return jsonify(access_token=access_token, username=user.username), 200
-    else:
-        return jsonify({"error": "Usuario o contraseña inválidos"}), 401
+    return jsonify({"error": "Usuario o contraseña inválidos"}), 401
 
-## Rutas de Perfil
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def get_my_profile():
+    user = User.query.get(int(get_jwt_identity()))
+    if not user: return jsonify({"error": "Usuario no encontrado"}), 404
+    return jsonify({"id": user.id, "username": user.username, "email": user.email, "is_admin": user.is_admin}), 200
 
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return jsonify({'error': 'Usuario no encontrado'}), 404
-
+    user = User.query.filter_by(username=username).first_or_404()
     user_albums = Album.query.filter_by(user_id=user.id).order_by(Album.created_at.desc()).all()
     albums_list = []
     for album in user_albums:
         first_media = Media.query.filter_by(album_id=album.id).order_by(Media.created_at.asc()).first()
-        albums_list.append({
-            'id': album.id,
-            'title': album.title,
-            'thumbnail_url': f'/uploads/{first_media.file_path}' if first_media else None,
-            'views_count': album.views_count
-        })
-
-    return jsonify({
-        'id': user.id,
-        'username': user.username,
-        'bio': user.bio,
-        'profile_picture_url': f'/uploads/{user.profile_picture_path}' if user.profile_picture_path else None,
-        'banner_image_url': f'/uploads/{user.banner_image_path}' if user.banner_image_path else None,
-        'albums': albums_list
-    }), 200
+        albums_list.append({'id': album.id, 'title': album.title, 'thumbnail_url': f'/uploads/{first_media.file_path}' if first_media else None, 'views_count': album.views_count})
+    return jsonify({'id': user.id, 'username': user.username, 'bio': user.bio, 'profile_picture_url': f'/uploads/{user.profile_picture_path}' if user.profile_picture_path else None, 'banner_image_url': f'/uploads/{user.banner_image_path}' if user.banner_image_path else None, 'albums': albums_list})
 
 @app.route('/api/my-profile', methods=['PUT'])
 @jwt_required()
 def update_my_profile():
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+    user = User.query.get(int(get_jwt_identity()))
     data = request.get_json()
-    if 'bio' in data:
-        user.bio = data['bio']
+    if 'bio' in data: user.bio = data['bio']
     db.session.commit()
-    return jsonify({'message': 'Perfil actualizado exitosamente'}), 200
+    return jsonify({'message': 'Perfil actualizado'})
 
 def handle_profile_image_upload(user, file, image_type):
     if file and allowed_file(file.filename):
@@ -657,3 +588,4 @@ def contact_form_submission():
 # --- Punto de Entrada para Ejecutar la Aplicación ---
 if __name__ == '__main__':
     app.run(debug=True)
+
