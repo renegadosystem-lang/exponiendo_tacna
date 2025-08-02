@@ -1,42 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // La URL de tu backend en Render
+    // --- 1. CONFIGURACIÓN Y VARIABLES GLOBALES ---
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-
-    // --- 1. VERIFICACIÓN DE AUTENTICACIÓN Y VARIABLES ---
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
-    if (!token || !username) {
-        window.location.href = '/index.html'; // Redirige a index.html
-        return;
-    }
-    const myProfileLink = document.getElementById('my-profile-link');
-    if (myProfileLink) {
-        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
-        myProfileLink.href = `/profile.html?user=${username}`;
-    }
-
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const currentUserId = parseInt(payload.sub, 10);
-
+    
     // --- Variables para la Galería Lightbox ---
     let currentAlbumMedia = [];
     let currentIndex = 0;
+    let currentAlbumId = null;
 
-    // --- 2. SELECTORES DE ELEMENTOS DEL DOM ---
+    // --- 2. VERIFICACIÓN DE AUTENTICACIÓN ---
+    if (!token || !username) {
+        window.location.href = '/index.html';
+        return;
+    }
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentUserId = parseInt(payload.sub, 10);
+
+    // --- 3. SELECTORES DE ELEMENTOS DEL DOM ---
+    const myProfileLink = document.getElementById('my-profile-link');
     const exploreGrid = document.getElementById('explore-grid');
     const myAlbumsGrid = document.getElementById('my-albums-grid');
     const logoutBtn = document.getElementById('logout-btn');
     const paginationControls = document.getElementById('pagination-controls');
     const tabs = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
-    
-    const viewAlbumModal = document.getElementById('view-album-modal');
+    const modals = { 
+        create: document.getElementById('create-album-modal'), 
+        edit: document.getElementById('edit-album-modal'), 
+        upload: document.getElementById('upload-media-modal'), 
+        view: document.getElementById('view-album-modal') 
+    };
     const lightboxContent = document.querySelector('.lightbox-content');
     const lightboxCaption = document.getElementById('lightbox-caption');
     const lightboxPrev = document.getElementById('lightbox-prev');
     const lightboxNext = document.getElementById('lightbox-next');
 
-    // --- 3. FUNCIÓN GENÉRICA PARA LLAMADAS A LA API ---
+    // --- 4. CONFIGURACIÓN INICIAL ---
+    if (myProfileLink) myProfileLink.href = `/profile.html?user=${username}`;
+
+    // --- 5. FUNCIÓN GENÉRICA PARA LLAMADAS A LA API ---
     const fetchWithAuth = (url, options = {}) => {
         const headers = { 'Authorization': `Bearer ${token}`, ...options.headers };
         if (!(options.body instanceof FormData)) {
@@ -45,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
-    // --- 4. LÓGICA DE PESTAÑAS ---
+    // --- 6. LÓGICA DE PESTAÑAS ---
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(item => item.classList.remove('active'));
@@ -57,10 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 5. LÓGICA DE LA GALERÍA LIGHTBOX ---
+    // --- 7. LÓGICA DE LA GALERÍA LIGHTBOX ---
     const showMediaAtIndex = (index) => {
         if (!currentAlbumMedia || currentAlbumMedia.length === 0) {
-            viewAlbumModal.classList.remove('is-visible');
+            modals.view.classList.remove('is-visible');
             return;
         }
         if (index < 0 || index >= currentAlbumMedia.length) {
@@ -71,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = currentAlbumMedia[index];
         
         lightboxContent.innerHTML = ''; 
-        
         let mediaElement;
         if (item.file_type === 'video') {
             mediaElement = document.createElement('video');
@@ -84,21 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
-
         lightboxPrev.style.display = index === 0 ? 'none' : 'block';
         lightboxNext.style.display = index === currentAlbumMedia.length - 1 ? 'none' : 'block';
     };
-
-    lightboxPrev.addEventListener('click', () => showMediaAtIndex(currentIndex - 1));
-    lightboxNext.addEventListener('click', () => showMediaAtIndex(currentIndex + 1));
-    
-    document.addEventListener('keydown', (e) => {
-        if (viewAlbumModal.classList.contains('is-visible')) {
-            if (e.key === 'ArrowLeft') lightboxPrev.click();
-            if (e.key === 'ArrowRight') lightboxNext.click();
-            if (e.key === 'Escape') viewAlbumModal.classList.remove('is-visible');
-        }
-    });
 
     const openAlbumViewer = async (albumId) => {
         try {
@@ -108,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             currentAlbumMedia = albumData.media || [];
             if (currentAlbumMedia.length > 0) {
-                viewAlbumModal.classList.add('is-visible');
+                modals.view.classList.add('is-visible');
                 showMediaAtIndex(0);
             } else {
                 alert('Este álbum está vacío.');
@@ -119,12 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- 6. LÓGICA DE CARGA DE ÁLBUMES ---
+    // --- 8. LÓGICA DE CARGA DE ÁLBUMES ---
     const loadAlbums = async (page = 1) => {
-        exploreGrid.innerHTML = '<p>Cargando álbumes...</p>';
-        if (page === 1) {
-            loadMyAlbums();
-        }
+        if (page === 1) loadMyAlbums();
         try {
             const response = await fetch(`${backendUrl}/api/albums?sort_by=created_at&sort_order=desc&page=${page}`);
             if (!response.ok) throw new Error('No se pudieron cargar los álbumes.');
@@ -165,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createAlbumCard = (album, isOwner) => {
         const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
-        // --- CORRECCIÓN: Apunta a profile.html con el parámetro correcto ---
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -185,65 +171,36 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
     };
 
-    // --- 7. LÓGICA DE PAGINACIÓN PRINCIPAL ---
+    // --- 9. LÓGICA DE PAGINACIÓN ---
     const renderPagination = (paginationData) => {
         const { current_page, total_pages, has_prev, prev_page, has_next, next_page } = paginationData;
-        paginationControls.innerHTML = '';
-        if (total_pages <= 1) { paginationControls.style.display = 'none'; return; }
-        paginationControls.style.display = 'flex';
-        let html = '';
-        const page_window = 2;
-        html += `<a href="#" class="page-btn ${current_page === 1 ? 'disabled' : ''}" data-page="1">« Primera</a>`;
-        html += `<a href="#" class="page-btn ${!has_prev ? 'disabled' : ''}" data-page="${prev_page}">‹ Anterior</a>`;
-        let lastPageRendered = 0;
-        for (let i = 1; i <= total_pages; i++) {
-            const shouldShow = (i === 1 || i === total_pages || (i >= current_page - page_window && i <= current_page + page_window));
-            if (shouldShow) {
-                if (lastPageRendered !== 0 && i > lastPageRendered + 1) html += `<span class="ellipsis">...</span>`;
-                html += `<a href="#" class="page-number ${i === current_page ? 'active' : ''}" data-page="${i}">${i}</a>`;
-                lastPageRendered = i;
+        if(paginationControls) {
+            paginationControls.innerHTML = '';
+            if (total_pages <= 1) { paginationControls.style.display = 'none'; return; }
+            paginationControls.style.display = 'flex';
+            let html = '';
+            const page_window = 2;
+            html += `<a href="#" class="page-btn ${current_page === 1 ? 'disabled' : ''}" data-page="1">« Primera</a>`;
+            html += `<a href="#" class="page-btn ${!has_prev ? 'disabled' : ''}" data-page="${prev_page}">‹ Anterior</a>`;
+            let lastPageRendered = 0;
+            for (let i = 1; i <= total_pages; i++) {
+                const shouldShow = (i === 1 || i === total_pages || (i >= current_page - page_window && i <= current_page + page_window));
+                if (shouldShow) {
+                    if (lastPageRendered !== 0 && i > lastPageRendered + 1) html += `<span class="ellipsis">...</span>`;
+                    html += `<a href="#" class="page-number ${i === current_page ? 'active' : ''}" data-page="${i}">${i}</a>`;
+                    lastPageRendered = i;
+                }
             }
+            html += `<a href="#" class="page-btn ${!has_next ? 'disabled' : ''}" data-page="${next_page}">Siguiente ›</a>`;
+            html += `<a href="#" class="page-btn ${current_page === total_pages ? 'disabled' : ''}" data-page="${total_pages}">Última »</a>`;
+            paginationControls.innerHTML = html;
         }
-        html += `<a href="#" class="page-btn ${!has_next ? 'disabled' : ''}" data-page="${next_page}">Siguiente ›</a>`;
-        html += `<a href="#" class="page-btn ${current_page === total_pages ? 'disabled' : ''}" data-page="${total_pages}">Última »</a>`;
-        paginationControls.innerHTML = html;
     };
     
-    paginationControls.addEventListener('click', (e) => {
-        e.preventDefault();
-        const target = e.target;
-        if (target.matches('.page-btn') || target.matches('.page-number')) {
-            if (target.classList.contains('disabled') || target.classList.contains('active')) return;
-            const page = target.dataset.page;
-            if (page) {
-                loadAlbums(parseInt(page, 10));
-                window.scrollTo(0, 0);
-            }
-        }
-    });
-
-    // --- 8. GESTIÓN DE MODALES ---
-    const modals = { 
-        create: document.getElementById('create-album-modal'), 
-        edit: document.getElementById('edit-album-modal'), 
-        upload: document.getElementById('upload-media-modal'), 
-        view: viewAlbumModal 
-    };
-
-    document.body.addEventListener('click', (e) => {
-        if (e.target.matches('.close-button')) {
-            e.target.closest('.modal').classList.remove('is-visible');
-        } else if (e.target.matches('.modal.is-visible')) {
-            if (!e.target.classList.contains('modal-lightbox')) {
-                e.target.classList.remove('is-visible');
-            }
-        }
-    });
-    
-    // --- 9. LÓGICA DE EVENTOS (Delegación de Clics) ---
-    let currentAlbumId = null;
+    // --- 10. LÓGICA DE EVENTOS Y FORMULARIOS ---
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
+        // Abrir modales
         if (target.matches('#create-album-btn')) {
             modals.create.classList.add('is-visible');
         } else if (target.matches('.btn-control.upload')) {
@@ -256,35 +213,43 @@ document.addEventListener('DOMContentLoaded', () => {
             form.title.value = target.dataset.albumTitle;
             form.description.value = target.dataset.albumDescription;
             modals.edit.classList.add('is-visible');
-        } else if (target.matches('.btn-control.delete')) {
+        }
+        // Cerrar modales
+        else if (target.matches('.close-button')) {
+            target.closest('.modal').classList.remove('is-visible');
+        } else if (target.matches('.modal.is-visible') && !target.closest('.modal-content')) {
+             target.classList.remove('is-visible');
+        }
+        // Acciones de borrado
+        else if (target.matches('.btn-control.delete')) {
             currentAlbumId = target.dataset.albumId;
-            if (confirm('¿Estás seguro de que quieres eliminar este álbum y todo su contenido?')) {
+            if (confirm('¿Estás seguro de que quieres eliminar este álbum?')) {
                 const response = await fetchWithAuth(`/api/albums/${currentAlbumId}`, { method: 'DELETE' });
                 if (response.ok) { alert('Álbum eliminado.'); await loadAlbums(1); }
                 else { alert('Error al eliminar el álbum.'); }
             }
         } else if(target.matches('.delete-media-btn')) {
             const mediaId = target.dataset.mediaId;
-            if(confirm('¿Seguro que quieres eliminar esta foto/video?')) {
+            if(confirm('¿Seguro que quieres eliminar este archivo?')) {
                 const response = await fetchWithAuth(`/api/media/${mediaId}`, { method: 'DELETE' });
                 if(response.ok) {
-                    currentAlbumMedia = currentAlbumMedia.filter(item => item.id !== parseInt(mediaId, 10));
+                    currentAlbumMedia = currentAlbumMedia.filter(item => item.id !== parseInt(mediaId));
                     showMediaAtIndex(currentIndex);
                 } else {
                     alert('Error al eliminar el archivo.');
                 }
             }
-        } else {
+        } 
+        // Abrir visor de galería
+        else {
             const albumCard = target.closest('.album-card');
             if (albumCard && !target.closest('.album-owner-controls')) {
                 e.preventDefault();
-                const albumId = albumCard.dataset.albumId;
-                openAlbumViewer(albumId);
+                openAlbumViewer(albumCard.dataset.albumId);
             }
         }
     });
 
-    // --- 10. LÓGICA DE FORMULARIOS ---
     const handleFormSubmit = async (form, url, method, isFormData = false) => {
         const errorDiv = form.querySelector('.form-error-message');
         const submitButton = form.querySelector('button[type="submit"]');
@@ -343,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadForm = document.getElementById('upload-media-form');
     const fileUploadInput = document.getElementById('file-upload-input');
     const fileUploadStatus = document.getElementById('file-upload-filename');
-    if (fileUploadInput) {
+    if (fileUploadInput && fileUploadStatus) {
         fileUploadInput.addEventListener('change', () => {
             if (fileUploadInput.files.length > 0) {
                 fileUploadStatus.textContent = fileUploadInput.files.length === 1 ? '1 archivo seleccionado.' : `${fileUploadInput.files.length} archivos seleccionados.`;
@@ -401,9 +366,23 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', (e) => { 
         e.preventDefault(); 
         localStorage.clear();
-        // --- CORRECCIÓN: Apunta a index.html ---
         window.location.href = '/index.html'; 
     });
     
+    if (paginationControls) {
+        paginationControls.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = e.target;
+            if (target.matches('.page-btn') || target.matches('.page-number')) {
+                if (target.classList.contains('disabled') || target.classList.contains('active')) return;
+                const page = target.dataset.page;
+                if (page) {
+                    loadAlbums(parseInt(page, 10));
+                    window.scrollTo(0, 0);
+                }
+            }
+        });
+    }
+
     loadAlbums(1);
 });
