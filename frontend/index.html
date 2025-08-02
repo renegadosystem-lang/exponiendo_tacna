@@ -154,10 +154,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // La URL de tu backend en Render
+            const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+            
             // Inicializar todas las funcionalidades
             setupModals();
-            setupForms();
-            loadMostViewedAlbums();
+            setupForms(backendUrl);
+            loadMostViewedAlbums(backendUrl);
         });
 
         // --- LÓGICA DE MODALES ---
@@ -198,7 +201,7 @@
         }
 
         // --- LÓGICA DE FORMULARIOS ---
-        function setupForms() {
+        function setupForms(backendUrl) {
             const registerForm = document.getElementById('register-form');
             const loginForm = document.getElementById('login-form');
             
@@ -210,7 +213,7 @@
                     const username = e.target.username.value;
                     const password = e.target.password.value;
 
-                    fetch('https://exponiendo-tacna-api2.onrender.com/api/login', {
+                    fetch(`${backendUrl}/api/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
@@ -220,7 +223,7 @@
                         if (ok) {
                             localStorage.setItem('accessToken', data.access_token);
                             localStorage.setItem('username', data.username);
-                            window.location.href = '/dashboard';
+                            window.location.href = '/dashboard.html';
                         } else {
                             showError(errorMessageDiv, data.error || 'Ocurrió un error inesperado.');
                         }
@@ -241,7 +244,7 @@
                     const email = e.target.email.value;
                     const password = e.target.password.value;
 
-                    fetch('https://exponiendo-tacna-api2.onrender.com/api/register', {
+                    fetch(`${backendUrl}/api/register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, email, password })
@@ -264,9 +267,9 @@
         }
 
         // --- LÓGICA PARA CARGAR ÁLBUMES ---
-        function loadMostViewedAlbums() {
+        function loadMostViewedAlbums(backendUrl) {
             const gridContainer = document.getElementById('album-grid-container');
-            const apiUrl = 'https://exponiendo-tacna-api2.onrender.com/api/albums?sort_by=views_count&sort_order=desc&per_page=4';
+            const apiUrl = `${backendUrl}/api/albums?sort_by=views_count&sort_order=desc&per_page=4`;
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) throw new Error('Error de red');
@@ -276,8 +279,7 @@
                     gridContainer.innerHTML = '';
                     if (data.albums && data.albums.length > 0) {
                         data.albums.forEach(album => {
-                            const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-                            const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/img/placeholder-default.jpg';
+                            const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
                             const profileUrl = `/profile.html?user=${album.owner_username}`;
                             const albumCard = document.createElement('div');
                             albumCard.className = 'album-card';
@@ -313,5 +315,3 @@
     </script>
 </body>
 </html>
-
-<p>Me exímo de responsabilidad penal por el contenido subido por los usuarios. El uso de este sitio implica la aceptación de los términos y condiciones. Si eres agente de la ley y quieres contactarte conmigo mi usuario de instagram esta en el apartado "Contacto"</p>
