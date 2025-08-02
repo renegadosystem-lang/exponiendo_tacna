@@ -222,26 +222,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 8. GESTIÓN DE MODALES ---
-    const modals = { 
-        create: document.getElementById('create-album-modal'), 
-        edit: document.getElementById('edit-album-modal'), 
-        upload: document.getElementById('upload-media-modal'), 
-        view: viewAlbumModal 
-    };
-
-    document.body.addEventListener('click', (e) => {
-        if (e.target.matches('.close-button')) {
-            e.target.closest('.modal').classList.remove('is-visible');
-        } else if (e.target.matches('.modal.is-visible') && !e.target.closest('.modal-content')) {
-             e.target.classList.remove('is-visible');
-        }
-    });
-    
-    // --- 9. LÓGICA DE EVENTOS (Delegación de Clics) ---
+    ```javascript
+    // --- LÓGICA DE EVENTOS (UNIFICADA) ---
     let currentAlbumId = null;
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
+        
+        // Abrir modales
         if (target.matches('#create-album-btn')) {
             modals.create.classList.add('is-visible');
         } else if (target.matches('.btn-control.upload')) {
@@ -254,7 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
             form.title.value = target.dataset.albumTitle;
             form.description.value = target.dataset.albumDescription;
             modals.edit.classList.add('is-visible');
-        } else if (target.matches('.btn-control.delete')) {
+        } 
+        // Cerrar modales
+        else if (target.matches('.close-button')) {
+            target.closest('.modal').classList.remove('is-visible');
+        } else if (target.matches('.modal.is-visible') && !target.closest('.modal-content')) {
+             target.classList.remove('is-visible');
+        }
+        // Acciones de borrado
+        else if (target.matches('.btn-control.delete')) {
             currentAlbumId = target.dataset.albumId;
             if (confirm('¿Estás seguro de que quieres eliminar este álbum y todo su contenido?')) {
                 const response = await fetchWithAuth(`/api/albums/${currentAlbumId}`, { method: 'DELETE' });
@@ -272,7 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Error al eliminar el archivo.');
                 }
             }
-        } else {
+        } 
+        // Abrir visor de galería
+        else {
             const albumCard = target.closest('.album-card');
             if (albumCard && !target.closest('.album-owner-controls')) {
                 e.preventDefault();
@@ -281,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
+    ```
     // --- 10. LÓGICA DE FORMULARIOS ---
     const handleFormSubmit = async (form, url, method, isFormData = false) => {
         const errorDiv = form.querySelector('.form-error-message');
@@ -404,3 +401,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
+
