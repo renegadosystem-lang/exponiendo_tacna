@@ -94,6 +94,14 @@
                 <a href="#contacto">Contacto</a>
             </nav>
         </div>
+        <div id="view-album-modal" class="modal modal-lightbox">
+        <span class="close-button lightbox-close">&times;</span>
+        <button class="lightbox-nav prev" id="lightbox-prev">&#10094;</button>
+        <div class="lightbox-content"></div>
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+        <button class="lightbox-nav next" id="lightbox-next">&#10095;</button>
+    </div>
+    ```
     </footer>
 
     <div id="login-modal" class="modal">
@@ -154,6 +162,73 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            ```javascript
+            // --- Lógica de la Galería (AÑADIDA) ---
+            const viewAlbumModal = document.getElementById('view-album-modal');
+            const lightboxContent = viewAlbumModal.querySelector('.lightbox-content');
+            const lightboxCaption = viewAlbumModal.querySelector('#lightbox-caption');
+            const lightboxPrev = viewAlbumModal.querySelector('#lightbox-prev');
+            const lightboxNext = viewAlbumModal.querySelector('#lightbox-next');
+            let currentAlbumMedia = [];
+            let currentIndex = 0;
+
+            const showMediaAtIndex = (index) => {
+                if (index < 0 || index >= currentAlbumMedia.length) return;
+                currentIndex = index;
+                const item = currentAlbumMedia[index];
+                lightboxContent.innerHTML = '';
+                let mediaElement;
+                if (item.file_type === 'video') {
+                    mediaElement = document.createElement('video');
+                    mediaElement.controls = true;
+                    mediaElement.autoplay = true;
+                } else {
+                    mediaElement = document.createElement('img');
+                }
+                mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
+                lightboxContent.appendChild(mediaElement);
+                lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
+                lightboxPrev.style.display = index === 0 ? 'none' : 'block';
+                lightboxNext.style.display = index === currentAlbumMedia.length - 1 ? 'none' : 'block';
+            };
+
+            const openAlbumViewer = async (albumId) => {
+                try {
+                    const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
+                    if (!response.ok) throw new Error('No se pudo cargar el álbum');
+                    const albumData = await response.json();
+                    currentAlbumMedia = albumData.media || [];
+                    if (currentAlbumMedia.length > 0) {
+                        viewAlbumModal.classList.add('is-visible');
+                        showMediaAtIndex(0);
+                    } else {
+                        alert('Este álbum está vacío.');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Error al cargar el contenido del álbum.');
+                }
+            };
+            
+            lightboxPrev.addEventListener('click', () => showMediaAtIndex(currentIndex - 1));
+            lightboxNext.addEventListener('click', () => showMediaAtIndex(currentIndex + 1));
+            document.addEventListener('keydown', (e) => {
+                if (viewAlbumModal.classList.contains('is-visible')) {
+                    if (e.key === 'ArrowLeft') lightboxPrev.click();
+                    if (e.key === 'ArrowRight') lightboxNext.click();
+                    if (e.key === 'Escape') viewAlbumModal.classList.remove('is-visible');
+                }
+            });
+
+            // Lógica para abrir la galería al hacer clic en un álbum (AÑADIDA)
+            document.getElementById('album-grid-container').addEventListener('click', (e) => {
+                const albumCard = e.target.closest('.album-card');
+                if (albumCard) {
+                    e.preventDefault();
+                    openAlbumViewer(albumCard.dataset.albumId);
+                }
+            });
+    ```
             // La URL de tu backend en Render
             const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
             
@@ -267,40 +342,37 @@
         }
 
         // --- LÓGICA PARA CARGAR ÁLBUMES ---
+        ```javascript
         function loadMostViewedAlbums(backendUrl) {
             const gridContainer = document.getElementById('album-grid-container');
             const apiUrl = `${backendUrl}/api/albums?sort_by=views_count&sort_order=desc&per_page=4`;
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error de red');
-                    return response.json();
-                })
-                .then(data => {
-                    gridContainer.innerHTML = '';
-                    if (data.albums && data.albums.length > 0) {
-                        data.albums.forEach(album => {
-                            const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
-                            const profileUrl = `/profile.html?user=${album.owner_username}`;
-                            const albumCard = document.createElement('div');
-                            albumCard.className = 'album-card';
-                            albumCard.innerHTML = `
-                                <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
-                                <div class="album-info">
-                                    <h3>${album.title}</h3>
-                                    <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
-                                    <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
-                                </div>`;
-                            gridContainer.appendChild(albumCard);
-                        });
-                    } else {
-                        gridContainer.innerHTML = '<p>Aún no hay álbumes para mostrar.</p>';
-                    }
-                }).catch(error => {
-                    console.error('Error al cargar álbumes:', error);
-                    gridContainer.innerHTML = '<p>No se pudieron cargar los álbumes.</p>';
-                });
+            fetch(apiUrl).then(response => response.json()).then(data => {
+                gridContainer.innerHTML = '';
+                if (data.albums && data.albums.length > 0) {
+                    data.albums.forEach(album => {
+                        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+                        const profileUrl = `/profile.html?user=${album.owner_username}`;
+                        const albumCard = document.createElement('div');
+                        albumCard.className = 'album-card';
+                        albumCard.dataset.albumId = album.id; // <-- LÍNEA IMPORTANTE
+                        albumCard.innerHTML = `
+                            <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
+                            <div class="album-info">
+                                <h3>${album.title}</h3>
+                                <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                                <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
+                            </div>`;
+                        gridContainer.appendChild(albumCard);
+                    });
+                } else {
+                    gridContainer.innerHTML = '<p>Aún no hay álbumes para mostrar.</p>';
+                }
+            }).catch(error => {
+                console.error('Error al cargar álbumes:', error);
+                gridContainer.innerHTML = '<p>No se pudieron cargar los álbumes.</p>';
+            });
         }
-
+    ```
         // --- FUNCIONES DE AYUDA ---
         function showError(element, message) {
             element.textContent = message;
@@ -315,3 +387,4 @@
     </script>
 </body>
 </html>
+
