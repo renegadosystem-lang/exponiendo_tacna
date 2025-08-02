@@ -23,7 +23,7 @@ if DATABASE_URL is None:
 # --- Configuración de la Base de Datos (Versión para Fly.io) ---
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# La URL de Fly.io viene como 'postgres://...', pero SQLAlchemy prefiere 'postgresql://...'
+DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -51,6 +51,8 @@ jwt = JWTManager(app)
 
 # --- Configuración para Subida de Archivos ---
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
 
@@ -130,19 +132,14 @@ class Tag(db.Model):
 Media.tags = db.relationship('Tag', secondary=media_tags, backref=db.backref('media_items', lazy='dynamic'))
 
 # --- Rutas de la App (Vistas HTML) ---
-
-@app.route('/')
-def serve_frontend():
-    return render_template('index.html')
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-@app.route('/profile/<username>')
-def profile_page(username):
-    return render_template('profile.html')
-
+# --- INICIO DEL CÓDIGO AÑADIDO ---
+# Esta función creará las tablas de la base de datos si no existen.
+def create_tables():
+    with app.app_context():
+        print("Creando tablas de la base de datos...")
+        db.create_all()
+        print("Tablas creadas exitosamente.")
+        
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -659,7 +656,4 @@ def contact_form_submission():
 
 # --- Punto de Entrada para Ejecutar la Aplicación ---
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        print("Tablas de la base de datos creadas/verificadas.")
     app.run(debug=True)
