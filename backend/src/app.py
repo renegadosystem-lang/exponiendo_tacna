@@ -8,9 +8,7 @@ from sqlalchemy import or_
 
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from flask_cors import CORS
-# --- INICIO DE CAMBIOS: Importaciones de Supabase ---
 from supabase import create_client, Client
-# --- FIN DE CAMBIOS ---
 
 app = Flask(__name__)
 CORS(app)
@@ -21,10 +19,8 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if DATABASE_URL:
-    # Configuración para producción (Render/Supabase)
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
-    # Configuración para desarrollo local si la variable no está presente
     print("ADVERTENCIA: No se encontró DATABASE_URL, usando configuración local.")
     DB_USER = 'Exponiendo_Tacna_admin'
     DB_PASSWORD = 'pillito05122002'
@@ -42,7 +38,7 @@ jwt = JWTManager(app)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-BUCKET_NAME = "database" # El nombre de tu bucket en Supabase
+BUCKET_NAME = "database"
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
@@ -157,10 +153,8 @@ def handle_supabase_upload(user, file, image_type):
         unique_filename = f"{user.username}/{image_type}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         
         old_path = None
-        if image_type == 'avatar' and user.profile_picture_path:
-            old_path = user.profile_picture_path
-        elif image_type == 'banner' and user.banner_image_path:
-            old_path = user.banner_image_path
+        if image_type == 'avatar' and user.profile_picture_path: old_path = user.profile_picture_path
+        elif image_type == 'banner' and user.banner_image_path: old_path = user.banner_image_path
         
         if old_path:
             try: supabase.storage.from_(BUCKET_NAME).remove([old_path])
@@ -214,7 +208,6 @@ def handle_banner_image():
             db.session.commit()
         return jsonify({'message': 'Banner eliminado'})
 
-## Rutas de Álbumes, Media, etc.
 @app.route('/api/albums', methods=['POST'])
 @jwt_required()
 def create_album():
