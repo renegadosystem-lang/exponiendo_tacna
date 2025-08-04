@@ -1,18 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- INICIO DE LA ACTUALIZACIÓN ---
+    // La URL de tu backend en Render
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-    // --- FIN DE LA ACTUALIZACIÓN ---
 
     // --- 1. OBTENER DATOS Y AUTENTICACIÓN ---
     const token = localStorage.getItem('accessToken');
     
-    // --- CAMBIO: Leer el username desde los parámetros de la URL ---
+    // --- CORRECCIÓN: Leer el username desde los parámetros de la URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const profileUsername = urlParams.get('user');
 
     if (!profileUsername) {
-        // Si no hay un usuario en la URL, no se puede cargar el perfil.
-        document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1><p>Asegúrate de que la URL sea correcta.</p></div>`;
+        document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1><p>Asegúrate de que la URL sea correcta, por ejemplo: /profile.html?user=nombredeusuario</p></div>`;
         return;
     }
 
@@ -24,11 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { console.error("Token inválido:", e); localStorage.clear(); }
     }
     
-    // --- Variables para la Galería Lightbox ---
+    // --- Variables y Selectores para la Galería Lightbox ---
     let currentAlbumMedia = [];
     let currentIndex = 0;
-
-    // --- Selectores del DOM ---
     const viewAlbumModal = document.getElementById('view-album-modal');
     const editBioModal = document.getElementById('edit-bio-modal');
     const lightboxContent = document.querySelector('.lightbox-content');
@@ -36,16 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightboxPrev = document.getElementById('lightbox-prev');
     const lightboxNext = document.getElementById('lightbox-next');
 
+    // --- FUNCIÓN GENÉRICA PARA LLAMADAS A LA API ---
     const fetchWithAuth = (url, options = {}) => {
         const headers = { 'Authorization': `Bearer ${token}`, ...options.headers };
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        // --- CAMBIO: Usar la URL completa ---
         return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
-    // --- 2. LÓGICA DE LA GALERÍA LIGHTBOX ---
+    // --- LÓGICA DE LA GALERÍA LIGHTBOX ---
     const showMediaAtIndex = (index) => {
         if (index < 0 || index >= currentAlbumMedia.length) return;
         currentIndex = index;
@@ -53,15 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         lightboxContent.innerHTML = '';
         let mediaElement;
-        if (item.file_type === 'video') {
+        if (item.file_type.startsWith('video')) {
             mediaElement = document.createElement('video');
             mediaElement.controls = true;
             mediaElement.autoplay = true;
         } else {
             mediaElement = document.createElement('img');
         }
-        // --- CAMBIO: Usar la URL completa ---
-        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
+        // La URL pública ya viene completa desde Supabase
+        mediaElement.src = item.file_path; 
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
 
@@ -69,27 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
         lightboxNext.style.display = index === currentAlbumMedia.length - 1 ? 'none' : 'block';
     };
 
-    lightboxPrev.addEventListener('click', () => showMediaAtIndex(currentIndex - 1));
-    lightboxNext.addEventListener('click', () => showMediaAtIndex(currentIndex + 1));
-    
-    document.addEventListener('keydown', (e) => {
-        if (viewAlbumModal.style.display === 'block') {
-            if (e.key === 'ArrowLeft') lightboxPrev.click();
-            if (e.key === 'ArrowRight') lightboxNext.click();
-            if (e.key === 'Escape') viewAlbumModal.querySelector('.close-button').click();
-        }
-    });
-
     const openAlbumViewer = async (albumId) => {
         try {
-            // --- CAMBIO: Usar la URL completa ---
             const response = await fetch(`${backendUrl}/api/albums/${albumId}`);
             if (!response.ok) throw new Error('No se pudo cargar el álbum');
             const albumData = await response.json();
             
             currentAlbumMedia = albumData.media || [];
             if (currentAlbumMedia.length > 0) {
-                viewAlbumModal.style.display = 'block';
+                viewAlbumModal.classList.add('is-visible');
                 showMediaAtIndex(0);
             } else {
                 alert('Este álbum está vacío.');
@@ -100,32 +84,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- 3. LÓGICA DE MODALES ---
+    // --- LÓGICA DE MODALES ---
     const setupModal = (modal, openTrigger) => {
         if (!modal) return;
         const closeBtn = modal.querySelector('.close-button');
-        const closeAction = () => modal.style.display = 'none';
+        const closeAction = () => modal.classList.remove('is-visible');
         
         if (openTrigger) {
             openTrigger.addEventListener('click', (e) => {
                 e.preventDefault();
-                modal.style.display = 'block';
+                modal.classList.add('is-visible');
             });
         }
-        
         if (closeBtn) {
             closeBtn.addEventListener('click', closeAction);
         }
-        
         if (!modal.classList.contains('modal-lightbox')) {
             window.addEventListener('click', e => { if (e.target === modal) closeAction(); });
         }
     };
 
-    // --- 4. CARGAR DATOS DEL PERFIL ---
+    // --- CARGAR DATOS DEL PERFIL ---
     const loadProfileData = async () => {
         try {
-            // --- CAMBIO: Usar la URL completa ---
             const response = await fetch(`${backendUrl}/api/profiles/${profileUsername}`);
             if (!response.ok) {
                 document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Usuario no encontrado</h1></div>`;
@@ -140,9 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const defaultAvatar = '/static/img/placeholder-default.jpg';
             const defaultBanner = '/static/img/hero-background.jpg';
 
-            // --- CAMBIO: Usar la URL completa para imágenes ---
-            document.getElementById('profile-avatar').style.backgroundImage = `url('${profile.profile_picture_url ? backendUrl + profile.profile_picture_url : defaultAvatar}')`;
-            document.getElementById('profile-banner').style.backgroundImage = `url('${profile.banner_image_url ? backendUrl + profile.banner_image_url : defaultBanner}')`;
+            document.getElementById('profile-avatar').style.backgroundImage = `url('${profile.profile_picture_url || defaultAvatar}')`;
+            document.getElementById('profile-banner').style.backgroundImage = `url('${profile.banner_image_url || defaultBanner}')`;
             
             const albumsGrid = document.getElementById('profile-albums-grid');
             albumsGrid.innerHTML = '';
@@ -165,15 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 setupVisitorNav();
             }
-
         } catch (error) {
             console.error('Error al cargar el perfil:', error);
         }
     };
 
     const createAlbumCard = (album) => {
-        // --- CAMBIO: Usar la URL completa para miniaturas ---
-        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+        const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
         return `
             <a href="#" class="album-card-link" data-album-id="${album.id}">
                 <div class="album-card">
@@ -186,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>`;
     };
     
-    // --- 5. LÓGICA PARA DUEÑOS DEL PERFIL Y VISITANTES ---
+    // --- LÓGICA PARA DUEÑOS DEL PERFIL Y VISITANTES ---
     const setupOwnerControls = (profile) => {
         document.getElementById('profile-nav').innerHTML = `
             <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
@@ -201,16 +179,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(id).style.display = 'flex';
         });
         
-        const bioModal = document.getElementById('edit-bio-modal');
         const bioForm = document.getElementById('edit-bio-form');
         bioForm.bio.value = profile.bio;
-        setupModal(bioModal, document.getElementById('edit-bio-btn'));
+        setupModal(editBioModal, document.getElementById('edit-bio-btn'));
         
         bioForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const response = await fetchWithAuth('/api/my-profile', { method: 'PUT', body: JSON.stringify({ bio: e.target.bio.value }) });
             if(response.ok) {
-                bioModal.style.display = 'none';
+                editBioModal.classList.remove('is-visible');
                 loadProfileData();
             }
         });
