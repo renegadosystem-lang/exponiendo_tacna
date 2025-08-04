@@ -32,22 +32,19 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- Configuración JWT ---
+# --- Configuración JWT y Supabase ---
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secreta-de-desarrollo-muy-segura")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
-
-# --- Configuración de Supabase ---
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-BUCKET_NAME = "database" # El nombre de tu bucket en Supabase
+BUCKET_NAME = "database"
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Modelos de Base de Datos ---
+# --- Modelos de Base de Datos (sin cambios) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -56,6 +53,7 @@ class User(db.Model):
     bio = db.Column(db.Text, nullable=True, default="¡Bienvenido a mi perfil!")
     profile_picture_path = db.Column(db.String(255), nullable=True)
     banner_image_path = db.Column(db.String(255), nullable=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     albums = db.relationship('Album', backref='owner', lazy=True, cascade="all, delete-orphan")
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
@@ -93,6 +91,8 @@ with app.app_context():
     db.create_all()
 
 # --- Rutas de API ---
+
+## Rutas de Autenticación y Perfil
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -115,9 +115,17 @@ def login_user():
         return jsonify(access_token=access_token, username=user.username), 200
     return jsonify({"error": "Usuario o contraseña inválidos"}), 401
 
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def get_my_profile():
+    user = User.query.get(int(get_jwt_identity()))
+    if not user: return jsonify({"error": "Usuario no encontrado"}), 404
+    return jsonify({"id": user.id, "username": user.username, "email": user.email, "is_admin": user.is_admin}), 200
+
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
+    # --- CORRECCIÓN: Obtener URLs públicas completas de Supabase ---
     profile_pic_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.profile_picture_path) if user.profile_picture_path else None
     banner_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.banner_image_path) if user.banner_image_path else None
     
@@ -310,3 +318,4 @@ def handle_album_update_delete(album_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
