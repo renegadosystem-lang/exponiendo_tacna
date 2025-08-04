@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime, timedelta
@@ -8,9 +8,7 @@ from sqlalchemy import or_
 
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from flask_cors import CORS
-# --- INICIO DE CAMBIOS: Importaciones de Supabase ---
 from supabase import create_client, Client
-# --- FIN DE CAMBIOS ---
 
 app = Flask(__name__)
 CORS(app)
@@ -21,10 +19,8 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if DATABASE_URL:
-    # Configuración para producción (Render/Supabase)
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
-    # Configuración para desarrollo local si la variable no está presente
     print("ADVERTENCIA: No se encontró DATABASE_URL, usando configuración local.")
     DB_USER = 'Exponiendo_Tacna_admin'
     DB_PASSWORD = 'pillito05122002'
@@ -41,24 +37,17 @@ app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secret
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
-# --- INICIO DE CAMBIOS: Configuración de Supabase ---
+# --- Configuración de Supabase ---
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-BUCKET_NAME = "database" # Nombre del bucket corregido
-# --- FIN DE CAMBIOS ---
-
-# Esta configuración ya no es crítica para el guardado de archivos, pero se mantiene por si acaso
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
+BUCKET_NAME = "database" # El nombre de tu bucket en Supabase
 
 def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Modelos de Base de Datos (sin cambios) ---
+# --- Modelos de Base de Datos ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -67,7 +56,6 @@ class User(db.Model):
     bio = db.Column(db.Text, nullable=True, default="¡Bienvenido a mi perfil!")
     profile_picture_path = db.Column(db.String(255), nullable=True)
     banner_image_path = db.Column(db.String(255), nullable=True)
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     albums = db.relationship('Album', backref='owner', lazy=True, cascade="all, delete-orphan")
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
@@ -105,8 +93,6 @@ with app.app_context():
     db.create_all()
 
 # --- Rutas de API ---
-
-## Rutas de Autenticación y Perfil
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -128,13 +114,6 @@ def login_user():
         access_token = create_access_token(identity=str(user.id))
         return jsonify(access_token=access_token, username=user.username), 200
     return jsonify({"error": "Usuario o contraseña inválidos"}), 401
-
-@app.route('/api/me', methods=['GET'])
-@jwt_required()
-def get_my_profile():
-    user = User.query.get(int(get_jwt_identity()))
-    if not user: return jsonify({"error": "Usuario no encontrado"}), 404
-    return jsonify({"id": user.id, "username": user.username, "email": user.email, "is_admin": user.is_admin}), 200
 
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
@@ -166,10 +145,8 @@ def handle_supabase_upload(user, file, image_type):
         unique_filename = f"{user.username}/{image_type}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         
         old_path = None
-        if image_type == 'avatar' and user.profile_picture_path:
-            old_path = user.profile_picture_path
-        elif image_type == 'banner' and user.banner_image_path:
-            old_path = user.banner_image_path
+        if image_type == 'avatar' and user.profile_picture_path: old_path = user.profile_picture_path
+        elif image_type == 'banner' and user.banner_image_path: old_path = user.banner_image_path
         
         if old_path:
             try: supabase.storage.from_(BUCKET_NAME).remove([old_path])
@@ -223,7 +200,6 @@ def handle_banner_image():
             db.session.commit()
         return jsonify({'message': 'Banner eliminado'})
 
-## Rutas de Álbumes, Media, etc.
 @app.route('/api/albums', methods=['POST'])
 @jwt_required()
 def create_album():
@@ -265,7 +241,7 @@ def delete_media(media_id):
     media = Media.query.get_or_404(media_id)
     
     current_user = User.query.get(user_id)
-    if media.album.user_id != user_id and not current_user.is_admin:
+    if media.album.user_id != user_id and not getattr(current_user, 'is_admin', False):
         return jsonify(error="No tienes permiso"), 403
     
     try:
@@ -307,7 +283,10 @@ def handle_album_update_delete(album_id):
     current_user = User.query.get(int(get_jwt_identity()))
     album = Album.query.get_or_404(album_id)
 
-    if album.user_id != current_user.id and not current_user.is_admin:
+    is_owner = album.user_id == current_user.id
+    is_admin = getattr(current_user, 'is_admin', False)
+
+    if not is_owner and not is_admin:
         return jsonify({'error': 'No tienes permiso para realizar esta acción'}), 403
 
     if request.method == 'PUT':
@@ -318,7 +297,6 @@ def handle_album_update_delete(album_id):
         return jsonify({'message': 'Álbum actualizado exitosamente'})
     
     if request.method == 'DELETE':
-        # Borrar todos los archivos del álbum en Supabase
         files_to_delete = [media.file_path for media in album.media]
         if files_to_delete:
             try:
