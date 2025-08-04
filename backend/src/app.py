@@ -8,6 +8,9 @@ from sqlalchemy import or_
 
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from flask_cors import CORS
+# --- INICIO DE CAMBIOS: Importaciones de Supabase ---
+from supabase import create_client, Client
+# --- FIN DE CAMBIOS ---
 
 app = Flask(__name__)
 CORS(app)
@@ -33,11 +36,19 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- Configuración JWT y de Subida de Archivos ---
+# --- Configuración JWT ---
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secreta-de-desarrollo-muy-segura")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
+# --- INICIO DE CAMBIOS: Configuración de Supabase ---
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+BUCKET_NAME = "database" # Nombre del bucket corregido
+# --- FIN DE CAMBIOS ---
+
+# Esta configuración ya no es crítica para el guardado de archivos, pero se mantiene por si acaso
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -47,7 +58,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Modelos de Base de Datos ---
+# --- Modelos de Base de Datos (sin cambios) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -95,21 +106,14 @@ with app.app_context():
 
 # --- Rutas de API ---
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-    
 ## Rutas de Autenticación y Perfil
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
     if not all(key in data for key in ['username', 'email', 'password']):
         return jsonify({'error': 'Faltan datos de registro'}), 400
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'El nombre de usuario ya existe'}), 409
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'error': 'El email ya está registrado'}), 409
-    
+    if User.query.filter_by(username=data['username']).first() or User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'El usuario o email ya existe'}), 409
     new_user = User(username=data['username'], email=data['email'])
     new_user.set_password(data['password'])
     db.session.add(new_user)
@@ -135,12 +139,16 @@ def get_my_profile():
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
+    profile_pic_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.profile_picture_path) if user.profile_picture_path else None
+    banner_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.banner_image_path) if user.banner_image_path else None
+    
     user_albums = Album.query.filter_by(user_id=user.id).order_by(Album.created_at.desc()).all()
     albums_list = []
     for album in user_albums:
         first_media = Media.query.filter_by(album_id=album.id).order_by(Media.created_at.asc()).first()
-        albums_list.append({'id': album.id, 'title': album.title, 'thumbnail_url': f'/uploads/{first_media.file_path}' if first_media else None, 'views_count': album.views_count})
-    return jsonify({'id': user.id, 'username': user.username, 'bio': user.bio, 'profile_picture_url': f'/uploads/{user.profile_picture_path}' if user.profile_picture_path else None, 'banner_image_url': f'/uploads/{user.banner_image_path}' if user.banner_image_path else None, 'albums': albums_list})
+        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media else None
+        albums_list.append({'id': album.id, 'title': album.title, 'thumbnail_url': thumbnail_url, 'views_count': album.views_count})
+    return jsonify({'id': user.id, 'username': user.username, 'bio': user.bio, 'profile_picture_url': profile_pic_url, 'banner_image_url': banner_url, 'albums': albums_list})
 
 @app.route('/api/my-profile', methods=['PUT'])
 @jwt_required()
@@ -151,104 +159,71 @@ def update_my_profile():
     db.session.commit()
     return jsonify({'message': 'Perfil actualizado'})
 
-def handle_profile_image_upload(user, file, image_type):
+def handle_supabase_upload(user, file, image_type):
     if file and allowed_file(file.filename):
+        file_content = file.read()
         filename = secure_filename(file.filename)
-        unique_filename = f"{user.username}_{image_type}_{datetime.now().strftime('%Y%m%d%H%M%S')}{os.path.splitext(filename)[1]}"
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(file_path)
+        unique_filename = f"{user.username}/{image_type}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         
-        old_image_path_str = None
+        old_path = None
         if image_type == 'avatar' and user.profile_picture_path:
-            old_image_path_str = user.profile_picture_path
+            old_path = user.profile_picture_path
         elif image_type == 'banner' and user.banner_image_path:
-            old_image_path_str = user.banner_image_path
+            old_path = user.banner_image_path
         
-        if old_image_path_str:
-            old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], old_image_path_str)
-            if os.path.exists(old_image_path):
-                os.remove(old_image_path)
+        if old_path:
+            try: supabase.storage.from_(BUCKET_NAME).remove([old_path])
+            except Exception as e: print(f"No se pudo eliminar el archivo antiguo {old_path}: {e}")
+
+        supabase.storage.from_(BUCKET_NAME).upload(file=file_content, path=unique_filename, file_options={"content-type": file.content_type})
         return unique_filename
     return None
 
 @app.route('/api/my-profile/picture', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_profile_picture():
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
-
+    user = User.query.get(int(get_jwt_identity()))
     if request.method == 'POST':
-        if 'file' not in request.files: return jsonify({'error': 'No se encontró el archivo'}), 400
-        file = request.files['file']
-        new_filename = handle_profile_image_upload(user, file, 'avatar')
-        if new_filename:
-            user.profile_picture_path = new_filename
+        file = request.files.get('file')
+        if not file: return jsonify({'error': 'No se encontró el archivo'}), 400
+        new_path = handle_supabase_upload(user, file, 'avatar')
+        if new_path:
+            user.profile_picture_path = new_path
             db.session.commit()
-            return jsonify({'message': 'Foto de perfil actualizada', 'profile_picture_url': f'/uploads/{new_filename}'}), 200
+            public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(new_path)
+            return jsonify({'message': 'Foto de perfil actualizada', 'profile_picture_url': public_url})
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
     
     if request.method == 'DELETE':
         if user.profile_picture_path:
-            file_to_delete = os.path.join(app.config['UPLOAD_FOLDER'], user.profile_picture_path)
-            if os.path.exists(file_to_delete):
-                os.remove(file_to_delete)
+            supabase.storage.from_(BUCKET_NAME).remove([user.profile_picture_path])
             user.profile_picture_path = None
             db.session.commit()
-            return jsonify({'message': 'Foto de perfil eliminada exitosamente'}), 200
-        return jsonify({'message': 'No hay foto de perfil para eliminar'}), 200
+        return jsonify({'message': 'Foto de perfil eliminada'})
 
 @app.route('/api/my-profile/banner', methods=['POST', 'DELETE'])
 @jwt_required()
 def handle_banner_image():
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
-
+    user = User.query.get(int(get_jwt_identity()))
     if request.method == 'POST':
-        if 'file' not in request.files: return jsonify({'error': 'No se encontró el archivo'}), 400
-        file = request.files['file']
-        new_filename = handle_profile_image_upload(user, file, 'banner')
-        if new_filename:
-            user.banner_image_path = new_filename
+        file = request.files.get('file')
+        if not file: return jsonify({'error': 'No se encontró el archivo'}), 400
+        new_path = handle_supabase_upload(user, file, 'banner')
+        if new_path:
+            user.banner_image_path = new_path
             db.session.commit()
-            return jsonify({'message': 'Banner actualizado', 'banner_image_url': f'/uploads/{new_filename}'}), 200
+            public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(new_path)
+            return jsonify({'message': 'Banner actualizado', 'banner_image_url': public_url})
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
     
     if request.method == 'DELETE':
         if user.banner_image_path:
-            file_to_delete = os.path.join(app.config['UPLOAD_FOLDER'], user.banner_image_path)
-            if os.path.exists(file_to_delete):
-                os.remove(file_to_delete)
+            supabase.storage.from_(BUCKET_NAME).remove([user.banner_image_path])
             user.banner_image_path = None
             db.session.commit()
-            return jsonify({'message': 'Banner eliminado exitosamente'}), 200
-        return jsonify({'message': 'No hay banner para eliminar'}), 200
+        return jsonify({'message': 'Banner eliminado'})
 
-## Rutas de Usuarios
-@app.route('/api/users', methods=['GET'])
-@jwt_required()
-def get_users():
-    current_user = User.query.get(int(get_jwt_identity()))
-    if not current_user.is_admin:
-        return jsonify({'error': 'Acceso denegado'}), 403
-    users = User.query.all()
-    users_list = [{'id': user.id, 'username': user.username, 'email': user.email} for user in users]
-    return jsonify(users_list)
-
-@app.route('/api/users/<int:user_id>', methods=['DELETE'])
-@jwt_required()
-def delete_user(user_id):
-    current_user = User.query.get(int(get_jwt_identity()))
-    user_to_delete = User.query.get(user_id)
-    if not user_to_delete: return jsonify({'error': 'Usuario no encontrado'}), 404
-    
-    if (current_user.is_admin and current_user.id != user_to_delete.id) or (current_user.id == user_to_delete.id):
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
-    else:
-        return jsonify({'error': 'No tienes permiso para eliminar este usuario'}), 403
-
-## Rutas de Álbumes
+## Rutas de Álbumes, Media, etc.
 @app.route('/api/albums', methods=['POST'])
 @jwt_required()
 def create_album():
@@ -260,6 +235,48 @@ def create_album():
     db.session.commit()
     return jsonify({'message': 'Álbum creado exitosamente', 'album': {'id': new_album.id}}), 201
 
+@app.route('/api/albums/<int:album_id>/media', methods=['POST'])
+@jwt_required()
+def upload_media(album_id):
+    user_id = int(get_jwt_identity())
+    album = Album.query.get_or_404(album_id)
+    if album.user_id != user_id: return jsonify(error="No tienes permiso"), 403
+    
+    file = request.files.get('file')
+    if not file: return jsonify(error="No se encontró el archivo"), 400
+
+    if allowed_file(file.filename):
+        file_content = file.read()
+        filename = secure_filename(file.filename)
+        unique_filename = f"{album.owner.username}/{album.id}/{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{filename}"
+        
+        supabase.storage.from_(BUCKET_NAME).upload(file=file_content, path=unique_filename, file_options={"content-type": file.content_type})
+
+        new_media = Media(album_id=album.id, file_path=unique_filename, file_type=file.content_type, title=request.form.get('title'), description=request.form.get('description'))
+        db.session.add(new_media)
+        db.session.commit()
+        return jsonify(message="Archivo subido exitosamente"), 201
+    return jsonify(error="Tipo de archivo no permitido"), 400
+
+@app.route('/api/media/<int:media_id>', methods=['DELETE'])
+@jwt_required()
+def delete_media(media_id):
+    user_id = int(get_jwt_identity())
+    media = Media.query.get_or_404(media_id)
+    
+    current_user = User.query.get(user_id)
+    if media.album.user_id != user_id and not current_user.is_admin:
+        return jsonify(error="No tienes permiso"), 403
+    
+    try:
+        supabase.storage.from_(BUCKET_NAME).remove([media.file_path])
+    except Exception as e:
+        print(f"No se pudo eliminar el archivo de Supabase {media.file_path}: {e}")
+
+    db.session.delete(media)
+    db.session.commit()
+    return jsonify(message="Archivo multimedia eliminado")
+
 @app.route('/api/albums', methods=['GET'])
 def get_all_albums():
     page = request.args.get('page', 1, type=int)
@@ -270,7 +287,7 @@ def get_all_albums():
     albums_list = []
     for album in albums:
         first_media = Media.query.filter_by(album_id=album.id).order_by(Media.created_at.asc()).first()
-        thumbnail_url = f'/uploads/{first_media.file_path}' if first_media else None
+        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media else None
         albums_list.append({'id': album.id, 'title': album.title, 'description': album.description, 'user_id': album.owner.id, 'created_at': album.created_at.isoformat(), 'views_count': album.views_count, 'owner_username': album.owner.username, 'thumbnail_url': thumbnail_url})
     return jsonify({'albums': albums_list, 'total_pages': pagination.pages, 'current_page': pagination.page, 'has_next': pagination.has_next, 'has_prev': pagination.has_prev, 'next_page': pagination.next_num, 'prev_page': pagination.prev_num})
 
@@ -279,7 +296,9 @@ def get_album(album_id):
     album = Album.query.get_or_404(album_id)
     album.views_count += 1
     db.session.commit()
-    media_list = [{'id': item.id, 'file_path': item.file_path, 'file_type': item.file_type} for item in album.media]
+    media_list = []
+    for item in album.media:
+        media_list.append({'id': item.id, 'file_path': supabase.storage.from_(BUCKET_NAME).get_public_url(item.file_path), 'file_type': item.file_type})
     return jsonify({'id': album.id, 'title': album.title, 'description': album.description, 'user_id': album.user_id, 'owner_username': album.owner.username, 'media': media_list})
 
 @app.route('/api/albums/<int:album_id>', methods=['PUT', 'DELETE'])
@@ -299,50 +318,17 @@ def handle_album_update_delete(album_id):
         return jsonify({'message': 'Álbum actualizado exitosamente'})
     
     if request.method == 'DELETE':
+        # Borrar todos los archivos del álbum en Supabase
+        files_to_delete = [media.file_path for media in album.media]
+        if files_to_delete:
+            try:
+                supabase.storage.from_(BUCKET_NAME).remove(files_to_delete)
+            except Exception as e:
+                print(f"Error eliminando archivos de Supabase para el álbum {album_id}: {e}")
+        
         db.session.delete(album)
         db.session.commit()
         return jsonify({'message': 'Álbum eliminado exitosamente'})
 
-## Rutas de Media
-@app.route('/api/albums/<int:album_id>/media', methods=['POST'])
-@jwt_required()
-def upload_media(album_id):
-    current_user = User.query.get(int(get_jwt_identity()))
-    album = Album.query.get_or_404(album_id)
-    
-    if album.user_id != current_user.id:
-        return jsonify(error="No tienes permiso para subir a este álbum"), 403
-
-    if 'file' not in request.files: return jsonify(error="No se encontró el archivo"), 400
-    file = request.files['file']
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-        media_type = 'image' if file.content_type.startswith('image/') else 'video'
-        new_media = Media(file_path=unique_filename, file_type=media_type, album_id=album_id, title=request.form.get('title'), description=request.form.get('description'))
-        db.session.add(new_media)
-        db.session.commit()
-        return jsonify(message="Archivo subido exitosamente", media_id=new_media.id), 201
-    return jsonify(error="Tipo de archivo no permitido"), 400
-
-@app.route('/api/media/<int:media_id>', methods=['DELETE'])
-@jwt_required()
-def delete_media(media_id):
-    current_user = User.query.get(int(get_jwt_identity()))
-    media = Media.query.get_or_404(media_id)
-
-    if media.album.user_id != current_user.id and not current_user.is_admin:
-        return jsonify(error="No tienes permiso para eliminar este archivo"), 403
-
-    try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], media.file_path))
-    except OSError as e:
-        print(f"Error eliminando archivo físico (puede que ya no exista): {e}")
-    db.session.delete(media)
-    db.session.commit()
-    return jsonify(message="Archivo multimedia eliminado"), 200
-
-# --- Punto de Entrada ---
 if __name__ == '__main__':
     app.run(debug=True)
