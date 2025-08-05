@@ -8,34 +8,23 @@ from sqlalchemy import or_
 
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from flask_cors import CORS
-# --- Importaciones de Supabase ---
 from supabase import create_client, Client
 
 app = Flask(__name__)
 CORS(app)
 
-# --- Configuración de la Base de Datos (Corregida y Simplificada) ---
+# --- Configuración de la Base de Datos ---
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-if DATABASE_URL:
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-else:
-    print("ADVERTENCIA: No se encontró DATABASE_URL, usando configuración local.")
-    DB_USER = 'Exponiendo_Tacna_admin'
-    DB_PASSWORD = 'pillito05122002'
-    DB_HOST = 'localhost'
-    DB_NAME = 'Exponiendo_Tacna_db'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- Configuración JWT y Supabase ---
+# --- Configuración JWT y Supabase Storage ---
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secreta-de-desarrollo-muy-segura")
 jwt = JWTManager(app)
-
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
@@ -45,7 +34,7 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Modelos de Base de Datos (sin cambios) ---
+# --- Modelos de Base de Datos ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -54,7 +43,6 @@ class User(db.Model):
     bio = db.Column(db.Text, nullable=True, default="¡Bienvenido a mi perfil!")
     profile_picture_path = db.Column(db.String(255), nullable=True)
     banner_image_path = db.Column(db.String(255), nullable=True)
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     albums = db.relationship('Album', backref='owner', lazy=True, cascade="all, delete-orphan")
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
@@ -92,8 +80,6 @@ with app.app_context():
     db.create_all()
 
 # --- Rutas de API ---
-
-## Rutas de Autenticación y Perfil
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -115,13 +101,6 @@ def login_user():
         access_token = create_access_token(identity=str(user.id))
         return jsonify(access_token=access_token, username=user.username), 200
     return jsonify({"error": "Usuario o contraseña inválidos"}), 401
-
-@app.route('/api/me', methods=['GET'])
-@jwt_required()
-def get_my_profile():
-    user = User.query.get(int(get_jwt_identity()))
-    if not user: return jsonify({"error": "Usuario no encontrado"}), 404
-    return jsonify({"id": user.id, "username": user.username, "email": user.email, "is_admin": user.is_admin}), 200
 
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
@@ -208,52 +187,13 @@ def handle_banner_image():
             db.session.commit()
         return jsonify({'message': 'Banner eliminado'})
 
-## Rutas de Usuarios
-@app.route('/api/users', methods=['GET'])
-@jwt_required()
-def get_users():
-    current_user = User.query.get(int(get_jwt_identity()))
-    if not current_user.is_admin:
-        return jsonify({'error': 'Acceso denegado'}), 403
-    users = User.query.all()
-    users_list = [{'id': user.id, 'username': user.username, 'email': user.email} for user in users]
-    return jsonify(users_list)
-
-@app.route('/api/users/<int:user_id>', methods=['DELETE'])
-@jwt_required()
-def delete_user(user_id):
-    current_user = User.query.get(int(get_jwt_identity()))
-    user_to_delete = User.query.get(user_id)
-    if not user_to_delete: return jsonify({'error': 'Usuario no encontrado'}), 404
-    
-    if (current_user.is_admin and current_user.id != user_to_delete.id) or (current_user.id == user_to_delete.id):
-        # Primero eliminar archivos de Supabase
-        if supabase:
-            try:
-                # Eliminar avatares y banners
-                paths_to_delete = []
-                if user_to_delete.profile_picture_path: paths_to_delete.append(user_to_delete.profile_picture_path)
-                if user_to_delete.banner_image_path: paths_to_delete.append(user_to_delete.banner_image_path)
-                if paths_to_delete: supabase.storage.from_(BUCKET_NAME).remove(paths_to_delete)
-                # Eliminar contenido de álbumes
-                supabase.storage.from_(BUCKET_NAME).remove([f"{user_to_delete.username}/"])
-            except Exception as e:
-                print(f"Error al eliminar archivos del usuario {user_to_delete.username} de Supabase: {e}")
-
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        return jsonify({'message': 'Usuario y su contenido han sido eliminados'}), 200
-    else:
-        return jsonify({'error': 'No tienes permiso para eliminar este usuario'}), 403
-
-## Rutas de Álbumes y Media
 @app.route('/api/albums', methods=['POST'])
 @jwt_required()
 def create_album():
-    current_user_id = int(get_jwt_identity())
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     if not data or 'title' not in data: return jsonify({'error': 'Faltan datos de álbum (title)'}), 400
-    new_album = Album(title=data['title'], description=data.get('description'), user_id=current_user_id)
+    new_album = Album(title=data['title'], description=data.get('description'), user_id=user_id)
     db.session.add(new_album)
     db.session.commit()
     return jsonify({'message': 'Álbum creado exitosamente', 'album': {'id': new_album.id}}), 201
@@ -263,7 +203,7 @@ def create_album():
 def upload_media(album_id):
     user_id = int(get_jwt_identity())
     album = Album.query.get_or_404(album_id)
-    if album.user_id != user_id: return jsonify(error="No tienes permiso para subir a este álbum"), 403
+    if album.user_id != user_id: return jsonify(error="No tienes permiso"), 403
     
     file = request.files.get('file')
     if not file: return jsonify(error="No se encontró el archivo"), 400
@@ -286,9 +226,8 @@ def upload_media(album_id):
 def delete_media(media_id):
     user_id = int(get_jwt_identity())
     media = Media.query.get_or_404(media_id)
-    current_user = User.query.get(user_id)
     
-    if media.album.user_id != user_id and not current_user.is_admin:
+    if media.album.user_id != user_id:
         return jsonify(error="No tienes permiso"), 403
     
     if supabase:
@@ -327,29 +266,28 @@ def get_album(album_id):
 @app.route('/api/albums/<int:album_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def handle_album_update_delete(album_id):
-    current_user = User.query.get(int(get_jwt_identity()))
+    user_id = int(get_jwt_identity())
     album = Album.query.get_or_404(album_id)
-
-    if album.user_id != current_user.id and not current_user.is_admin:
-        return jsonify({'error': 'No tienes permiso para realizar esta acción'}), 403
+    if album.user_id != user_id:
+        return jsonify({'error': 'No tienes permiso para esta acción'}), 403
 
     if request.method == 'PUT':
         data = request.get_json()
         if 'title' in data: album.title = data['title']
         if 'description' in data: album.description = data['description']
         db.session.commit()
-        return jsonify({'message': 'Álbum actualizado exitosamente'})
+        return jsonify({'message': 'Álbum actualizado'})
     
     if request.method == 'DELETE':
         if supabase:
             files_to_delete = [media.file_path for media in album.media]
             if files_to_delete:
                 try: supabase.storage.from_(BUCKET_NAME).remove(files_to_delete)
-                except Exception as e: print(f"Error eliminando archivos de Supabase: {e}")
+                except Exception as e: print(f"Error al eliminar archivos de Supabase: {e}")
         
         db.session.delete(album)
         db.session.commit()
-        return jsonify({'message': 'Álbum eliminado exitosamente'})
+        return jsonify({'message': 'Álbum eliminado'})
 
 if __name__ == '__main__':
     app.run(debug=True)
