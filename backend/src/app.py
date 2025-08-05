@@ -88,9 +88,9 @@ def register_user():
     if User.query.filter_by(username=data['username']).first() or User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'El usuario o email ya existe'}), 409
         
-         # --- INICIO DE LA CORRECCIÓN ---
-    # Se añade is_admin=False para cumplir con la regla de la base de datos
-    new_user = User(username=data['username'], email=data['email'], is_admin=False)
+    # --- INICIO DE LA CORRECCIÓN ---
+    new_user = User(username=data['username'], email=data['email'])
+    new_user.is_admin = False # Se asigna el valor después de crear el objeto
     # --- FIN DE LA CORRECCIÓN ---
     
     new_user = User(username=data['username'], email=data['email'])
@@ -297,4 +297,5 @@ def handle_album_update_delete(album_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
