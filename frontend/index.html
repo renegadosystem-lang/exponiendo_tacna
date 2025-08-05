@@ -279,7 +279,7 @@
                     gridContainer.innerHTML = '';
                     if (data.albums && data.albums.length > 0) {
                         data.albums.forEach(album => {
-                            const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+                            const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
                             const profileUrl = `/profile.html?user=${album.owner_username}`;
                             const albumCard = document.createElement('div');
                             albumCard.className = 'album-card';
@@ -315,3 +315,4 @@
     </script>
 </body>
 </html>
+
