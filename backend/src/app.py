@@ -8,6 +8,7 @@ from sqlalchemy import or_
 
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from flask_cors import CORS
+# --- Importaciones de Supabase ---
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -25,7 +26,6 @@ else:
     DB_USER = 'Exponiendo_Tacna_admin'
     DB_PASSWORD = 'pillito05122002'
     DB_HOST = 'localhost'
-    DB_PORT = '5432'
     DB_NAME = 'Exponiendo_Tacna_db'
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
@@ -35,10 +35,11 @@ db = SQLAlchemy(app)
 # --- Configuración JWT y Supabase ---
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "tu-clave-secreta-de-desarrollo-muy-segura")
 jwt = JWTManager(app)
+
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-BUCKET_NAME = "database"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+BUCKET_NAME = "database" # El nombre de tu bucket en Supabase
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
@@ -125,15 +126,14 @@ def get_my_profile():
 @app.route('/api/profiles/<username>', methods=['GET'])
 def get_user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    # --- CORRECCIÓN: Obtener URLs públicas completas de Supabase ---
-    profile_pic_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.profile_picture_path) if user.profile_picture_path else None
-    banner_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.banner_image_path) if user.banner_image_path else None
+    profile_pic_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.profile_picture_path) if user.profile_picture_path and supabase else None
+    banner_url = supabase.storage.from_(BUCKET_NAME).get_public_url(user.banner_image_path) if user.banner_image_path and supabase else None
     
     user_albums = Album.query.filter_by(user_id=user.id).order_by(Album.created_at.desc()).all()
     albums_list = []
     for album in user_albums:
         first_media = Media.query.filter_by(album_id=album.id).order_by(Media.created_at.asc()).first()
-        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media else None
+        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media and supabase else None
         albums_list.append({'id': album.id, 'title': album.title, 'thumbnail_url': thumbnail_url, 'views_count': album.views_count})
     return jsonify({'id': user.id, 'username': user.username, 'bio': user.bio, 'profile_picture_url': profile_pic_url, 'banner_image_url': banner_url, 'albums': albums_list})
 
@@ -147,7 +147,7 @@ def update_my_profile():
     return jsonify({'message': 'Perfil actualizado'})
 
 def handle_supabase_upload(user, file, image_type):
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename) and supabase:
         file_content = file.read()
         filename = secure_filename(file.filename)
         unique_filename = f"{user.username}/{image_type}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
@@ -158,7 +158,7 @@ def handle_supabase_upload(user, file, image_type):
         
         if old_path:
             try: supabase.storage.from_(BUCKET_NAME).remove([old_path])
-            except Exception as e: print(f"No se pudo eliminar el archivo antiguo {old_path}: {e}")
+            except Exception as e: print(f"Error al eliminar archivo antiguo: {e}")
 
         supabase.storage.from_(BUCKET_NAME).upload(file=file_content, path=unique_filename, file_options={"content-type": file.content_type})
         return unique_filename
@@ -180,7 +180,7 @@ def handle_profile_picture():
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
     
     if request.method == 'DELETE':
-        if user.profile_picture_path:
+        if user.profile_picture_path and supabase:
             supabase.storage.from_(BUCKET_NAME).remove([user.profile_picture_path])
             user.profile_picture_path = None
             db.session.commit()
@@ -202,12 +202,51 @@ def handle_banner_image():
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
     
     if request.method == 'DELETE':
-        if user.banner_image_path:
+        if user.banner_image_path and supabase:
             supabase.storage.from_(BUCKET_NAME).remove([user.banner_image_path])
             user.banner_image_path = None
             db.session.commit()
         return jsonify({'message': 'Banner eliminado'})
 
+## Rutas de Usuarios
+@app.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_users():
+    current_user = User.query.get(int(get_jwt_identity()))
+    if not current_user.is_admin:
+        return jsonify({'error': 'Acceso denegado'}), 403
+    users = User.query.all()
+    users_list = [{'id': user.id, 'username': user.username, 'email': user.email} for user in users]
+    return jsonify(users_list)
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    current_user = User.query.get(int(get_jwt_identity()))
+    user_to_delete = User.query.get(user_id)
+    if not user_to_delete: return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    if (current_user.is_admin and current_user.id != user_to_delete.id) or (current_user.id == user_to_delete.id):
+        # Primero eliminar archivos de Supabase
+        if supabase:
+            try:
+                # Eliminar avatares y banners
+                paths_to_delete = []
+                if user_to_delete.profile_picture_path: paths_to_delete.append(user_to_delete.profile_picture_path)
+                if user_to_delete.banner_image_path: paths_to_delete.append(user_to_delete.banner_image_path)
+                if paths_to_delete: supabase.storage.from_(BUCKET_NAME).remove(paths_to_delete)
+                # Eliminar contenido de álbumes
+                supabase.storage.from_(BUCKET_NAME).remove([f"{user_to_delete.username}/"])
+            except Exception as e:
+                print(f"Error al eliminar archivos del usuario {user_to_delete.username} de Supabase: {e}")
+
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        return jsonify({'message': 'Usuario y su contenido han sido eliminados'}), 200
+    else:
+        return jsonify({'error': 'No tienes permiso para eliminar este usuario'}), 403
+
+## Rutas de Álbumes y Media
 @app.route('/api/albums', methods=['POST'])
 @jwt_required()
 def create_album():
@@ -224,12 +263,12 @@ def create_album():
 def upload_media(album_id):
     user_id = int(get_jwt_identity())
     album = Album.query.get_or_404(album_id)
-    if album.user_id != user_id: return jsonify(error="No tienes permiso"), 403
+    if album.user_id != user_id: return jsonify(error="No tienes permiso para subir a este álbum"), 403
     
     file = request.files.get('file')
     if not file: return jsonify(error="No se encontró el archivo"), 400
 
-    if allowed_file(file.filename):
+    if allowed_file(file.filename) and supabase:
         file_content = file.read()
         filename = secure_filename(file.filename)
         unique_filename = f"{album.owner.username}/{album.id}/{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{filename}"
@@ -247,15 +286,14 @@ def upload_media(album_id):
 def delete_media(media_id):
     user_id = int(get_jwt_identity())
     media = Media.query.get_or_404(media_id)
-    
     current_user = User.query.get(user_id)
-    if media.album.user_id != user_id and not getattr(current_user, 'is_admin', False):
+    
+    if media.album.user_id != user_id and not current_user.is_admin:
         return jsonify(error="No tienes permiso"), 403
     
-    try:
-        supabase.storage.from_(BUCKET_NAME).remove([media.file_path])
-    except Exception as e:
-        print(f"No se pudo eliminar el archivo de Supabase {media.file_path}: {e}")
+    if supabase:
+        try: supabase.storage.from_(BUCKET_NAME).remove([media.file_path])
+        except Exception as e: print(f"Error al eliminar de Supabase: {e}")
 
     db.session.delete(media)
     db.session.commit()
@@ -271,7 +309,7 @@ def get_all_albums():
     albums_list = []
     for album in albums:
         first_media = Media.query.filter_by(album_id=album.id).order_by(Media.created_at.asc()).first()
-        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media else None
+        thumbnail_url = supabase.storage.from_(BUCKET_NAME).get_public_url(first_media.file_path) if first_media and supabase else None
         albums_list.append({'id': album.id, 'title': album.title, 'description': album.description, 'user_id': album.owner.id, 'created_at': album.created_at.isoformat(), 'views_count': album.views_count, 'owner_username': album.owner.username, 'thumbnail_url': thumbnail_url})
     return jsonify({'albums': albums_list, 'total_pages': pagination.pages, 'current_page': pagination.page, 'has_next': pagination.has_next, 'has_prev': pagination.has_prev, 'next_page': pagination.next_num, 'prev_page': pagination.prev_num})
 
@@ -282,7 +320,8 @@ def get_album(album_id):
     db.session.commit()
     media_list = []
     for item in album.media:
-        media_list.append({'id': item.id, 'file_path': supabase.storage.from_(BUCKET_NAME).get_public_url(item.file_path), 'file_type': item.file_type})
+        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(item.file_path) if supabase else None
+        media_list.append({'id': item.id, 'file_path': public_url, 'file_type': item.file_type})
     return jsonify({'id': album.id, 'title': album.title, 'description': album.description, 'user_id': album.user_id, 'owner_username': album.owner.username, 'media': media_list})
 
 @app.route('/api/albums/<int:album_id>', methods=['PUT', 'DELETE'])
@@ -291,10 +330,7 @@ def handle_album_update_delete(album_id):
     current_user = User.query.get(int(get_jwt_identity()))
     album = Album.query.get_or_404(album_id)
 
-    is_owner = album.user_id == current_user.id
-    is_admin = getattr(current_user, 'is_admin', False)
-
-    if not is_owner and not is_admin:
+    if album.user_id != current_user.id and not current_user.is_admin:
         return jsonify({'error': 'No tienes permiso para realizar esta acción'}), 403
 
     if request.method == 'PUT':
@@ -305,12 +341,11 @@ def handle_album_update_delete(album_id):
         return jsonify({'message': 'Álbum actualizado exitosamente'})
     
     if request.method == 'DELETE':
-        files_to_delete = [media.file_path for media in album.media]
-        if files_to_delete:
-            try:
-                supabase.storage.from_(BUCKET_NAME).remove(files_to_delete)
-            except Exception as e:
-                print(f"Error eliminando archivos de Supabase para el álbum {album_id}: {e}")
+        if supabase:
+            files_to_delete = [media.file_path for media in album.media]
+            if files_to_delete:
+                try: supabase.storage.from_(BUCKET_NAME).remove(files_to_delete)
+                except Exception as e: print(f"Error eliminando archivos de Supabase: {e}")
         
         db.session.delete(album)
         db.session.commit()
