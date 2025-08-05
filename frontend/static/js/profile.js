@@ -10,10 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             currentUserId = parseInt(payload.sub, 10);
-        } catch(e) {
-            console.error("Token inválido:", e);
-            localStorage.clear();
-        }
+        } catch(e) { console.error("Token inválido:", e); localStorage.clear(); }
     }
 
     if (!profileUsername) {
@@ -25,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAlbumMedia = [];
     let currentIndex = 0;
 
-    // --- Selectores del DOM ---
+    // --- 2. SELECTORES DE ELEMENTOS DEL DOM ---
     const viewAlbumModal = document.getElementById('view-album-modal');
     const editBioModal = document.getElementById('edit-bio-modal');
     const lightboxContent = document.querySelector('.lightbox-content');
@@ -33,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightboxPrev = document.getElementById('lightbox-prev');
     const lightboxNext = document.getElementById('lightbox-next');
 
-    // --- FUNCIÓN GENÉRICA PARA LLAMADAS A LA API ---
+    // --- 3. FUNCIÓN GENÉRICA PARA LLAMADAS A LA API ---
     const fetchWithAuth = (url, options = {}) => {
         const headers = { 'Authorization': `Bearer ${token}`, ...options.headers };
         if (!(options.body instanceof FormData)) {
@@ -42,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return fetch(`${backendUrl}${url}`, { ...options, headers });
     };
 
-    // --- LÓGICA DE LA GALERÍA LIGHTBOX ---
+    // --- 4. LÓGICA DE LA GALERÍA LIGHTBOX ---
     const showMediaAtIndex = (index) => {
         if (!currentAlbumMedia || currentAlbumMedia.length === 0) {
             viewAlbumModal.classList.remove('is-visible');
@@ -68,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
-
         lightboxPrev.style.display = index === 0 ? 'none' : 'block';
         lightboxNext.style.display = index === currentAlbumMedia.length - 1 ? 'none' : 'block';
     };
@@ -92,29 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- LÓGICA DE MODALES ---
-    const setupModal = (modal, openTrigger) => {
-        if (!modal) return;
-        const closeBtn = modal.querySelector('.close-button');
-        const closeAction = () => modal.classList.remove('is-visible');
-        
-        if (openTrigger) {
-            openTrigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                modal.classList.add('is-visible');
-            });
-        }
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeAction);
-        }
-        
-        if (!modal.classList.contains('modal-lightbox')) {
-            window.addEventListener('click', e => { if (e.target === modal) closeAction(); });
-        }
-    };
-
-    // --- CARGAR DATOS DEL PERFIL ---
+    // --- 5. CARGAR DATOS DEL PERFIL ---
     const loadProfileData = async () => {
         try {
             const response = await fetch(`${backendUrl}/api/profiles/${profileUsername}`);
@@ -140,12 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 profile.albums.forEach(album => {
                     albumsGrid.innerHTML += createAlbumCard(album);
                 });
-                albumsGrid.querySelectorAll('.album-card-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        openAlbumViewer(link.dataset.albumId);
-                    });
-                });
             } else {
                 albumsGrid.innerHTML = '<p>Este usuario aún no tiene álbumes públicos.</p>';
             }
@@ -155,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 setupVisitorNav();
             }
-
         } catch (error) {
             console.error('Error al cargar el perfil:', error);
         }
@@ -175,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>`;
     };
     
-    // --- LÓGICA PARA DUEÑOS DEL PERFIL Y VISITANTES ---
+    // --- 6. LÓGICA PARA DUEÑOS DEL PERFIL Y VISITANTES ---
     const setupOwnerControls = (profile) => {
         document.getElementById('profile-nav').innerHTML = `
             <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
@@ -192,12 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const bioForm = document.getElementById('edit-bio-form');
         bioForm.bio.value = profile.bio;
-        setupModal(editBioModal, document.getElementById('edit-bio-btn'));
         
         bioForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const response = await fetchWithAuth('/api/my-profile', { method: 'PUT', body: JSON.stringify({ bio: e.target.bio.value }) });
-            if(response.ok) {
+            if(response && response.ok) {
                 editBioModal.classList.remove('is-visible');
                 loadProfileData();
             }
@@ -207,17 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('banner-upload-input').addEventListener('change', (e) => handleImageUpload(e.target.files[0], 'banner'));
         
         document.getElementById('delete-avatar-btn').addEventListener('click', async () => {
-            if (confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
+            if (confirm('¿Estás seguro?')) {
                 const response = await fetchWithAuth('/api/my-profile/picture', { method: 'DELETE' });
-                if (response.ok) { alert('Foto de perfil eliminada.'); loadProfileData(); }
-                else { alert('No se pudo eliminar la foto de perfil.'); }
+                if (response && response.ok) { alert('Foto de perfil eliminada.'); loadProfileData(); }
+                else { alert('No se pudo eliminar la foto.'); }
             }
         });
         
         document.getElementById('delete-banner-btn').addEventListener('click', async () => {
-            if (confirm('¿Estás seguro de que quieres eliminar tu banner?')) {
+            if (confirm('¿Estás seguro?')) {
                 const response = await fetchWithAuth('/api/my-profile/banner', { method: 'DELETE' });
-                if (response.ok) { alert('Banner eliminado.'); loadProfileData(); }
+                if (response && response.ok) { alert('Banner eliminado.'); loadProfileData(); }
                 else { alert('No se pudo eliminar el banner.'); }
             }
         });
@@ -229,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', file);
         const url = `/api/my-profile/${type}`;
         const response = await fetchWithAuth(url, { method: 'POST', body: formData });
-        if(response.ok) {
+        if(response && response.ok) {
             alert('Imagen actualizada con éxito');
             loadProfileData();
         } else {
@@ -255,7 +221,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    // --- 7. LÓGICA DE EVENTOS (UNIFICADA Y CORREGIDA) ---
+    lightboxPrev.addEventListener('click', () => showMediaAtIndex(currentIndex - 1));
+    lightboxNext.addEventListener('click', () => showMediaAtIndex(currentIndex + 1));
+    
+    document.addEventListener('keydown', (e) => {
+        if (viewAlbumModal.classList.contains('is-visible')) {
+            if (e.key === 'ArrowLeft') lightboxPrev.click();
+            if (e.key === 'ArrowRight') lightboxNext.click();
+            if (e.key === 'Escape') viewAlbumModal.classList.remove('is-visible');
+        }
+    });
+
+    document.body.addEventListener('click', (e) => {
+        const target = e.target;
+        
+        // Abrir modal de biografía
+        if (target.matches('#edit-bio-btn')) {
+            editBioModal.classList.add('is-visible');
+        }
+        // Cerrar modales
+        else if (target.matches('.close-button')) {
+            target.closest('.modal').classList.remove('is-visible');
+        } else if (target.matches('.modal.is-visible') && !target.closest('.modal-content')) {
+             target.classList.remove('is-visible');
+        }
+        // Abrir visor de galería
+        else {
+            const albumLink = target.closest('.album-card-link');
+            if (albumLink) {
+                e.preventDefault();
+                openAlbumViewer(albumLink.dataset.albumId);
+            }
+        }
+    });
+    
     // --- INVOCACIÓN INICIAL ---
-    setupModal(viewAlbumModal); // Activa el botón de cerrar 'X' de la galería
     loadProfileData();
 });
