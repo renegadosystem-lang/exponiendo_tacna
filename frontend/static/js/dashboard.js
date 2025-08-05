@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('accessToken');
     const username = localStorage.getItem('username');
     if (!token || !username) {
-        window.location.href = '/index.html'; // Corregido para Netlify
+        window.location.href = '/index.html';
         return;
     }
     const myProfileLink = document.getElementById('my-profile-link');
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 5. LÓGICA DE LA GALERÍA LIGHTBOX ---
+    // --- 5. LÓGICA DE LA GALERÍA LIGHTBOX (CORREGIDA) ---
     const showMediaAtIndex = (index) => {
         if (!currentAlbumMedia || currentAlbumMedia.length === 0) {
             viewAlbumModal.classList.remove('is-visible');
@@ -72,14 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
         lightboxContent.innerHTML = ''; 
         
         let mediaElement;
-        if (item.file_type === 'video') {
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Comprobamos si el tipo de archivo EMPIEZA con "video"
+        if (item.file_type.startsWith('video')) {
+        // --- FIN DE LA CORRECCIÓN ---
             mediaElement = document.createElement('video');
             mediaElement.controls = true;
             mediaElement.autoplay = true;
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = item.file_path;
+        mediaElement.src = item.file_path; // La URL ya viene completa desde el backend
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
@@ -228,18 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
         view: viewAlbumModal 
     };
 
-    // --- 9. LÓGICA DE EVENTOS (Delegación de Clics - CORREGIDA) ---
+    // --- 9. LÓGICA DE EVENTOS (Delegación de Clics) ---
     let currentAlbumId = null;
     document.body.addEventListener('click', async (e) => {
         const target = e.target;
-        
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Si el clic fue en un enlace de perfil, no hacemos nada y dejamos que el navegador navegue.
         if (target.closest('.profile-link')) {
             return;
         }
-        // --- FIN DE LA CORRECCIÓN ---
-        
         if (target.matches('#create-album-btn')) {
             modals.create.classList.add('is-visible');
         } else if (target.matches('.btn-control.upload')) {
@@ -409,4 +407,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
-
