@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        mediaElement.src = `${backendUrl}/uploads/${item.file_path}`;
+        mediaElement.src = item.file_path;
         
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createAlbumCard = (album, isOwner) => {
-        const thumbnailUrl = album.thumbnail_url ? `${backendUrl}${album.thumbnail_url}` : '/static/img/placeholder-default.jpg';
+        const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
         const profileUrl = `/profile.html?user=${album.owner_username}`;
         const ownerControls = isOwner ? `
             <div class="album-owner-controls">
@@ -409,3 +409,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadAlbums(1);
 });
+
