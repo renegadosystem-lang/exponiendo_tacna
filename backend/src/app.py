@@ -92,8 +92,6 @@ def register_user():
     new_user = User(username=data['username'], email=data['email'])
     new_user.is_admin = False # Se asigna el valor después de crear el objeto
     # --- FIN DE LA CORRECCIÓN ---
-    
-    new_user = User(username=data['username'], email=data['email'])
     new_user.set_password(data['password'])
     db.session.add(new_user)
     db.session.commit()
@@ -297,5 +295,6 @@ def handle_album_update_delete(album_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
