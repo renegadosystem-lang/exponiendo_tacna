@@ -1,30 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // La URL de tu backend en Render
+    // --- 1. CONFIGURACIÓN Y VARIABLES ---
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-
-    // --- 1. OBTENER DATOS Y AUTENTICACIÓN ---
     const token = localStorage.getItem('accessToken');
-    
-    // --- CORRECCIÓN: Leer el username desde los parámetros de la URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const profileUsername = urlParams.get('user');
-
-    if (!profileUsername) {
-        document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1><p>Asegúrate de que la URL sea correcta, por ejemplo: /profile.html?user=nombredeusuario</p></div>`;
-        return;
-    }
 
     let currentUserId = null;
     if (token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             currentUserId = parseInt(payload.sub, 10);
-        } catch(e) { console.error("Token inválido:", e); localStorage.clear(); }
+        } catch(e) {
+            console.error("Token inválido:", e);
+            localStorage.clear();
+        }
     }
-    
-    // --- Variables y Selectores para la Galería Lightbox ---
+
+    if (!profileUsername) {
+        document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1></div>`;
+        return;
+    }
+
+    // --- Variables para la Galería Lightbox ---
     let currentAlbumMedia = [];
     let currentIndex = 0;
+
+    // --- Selectores del DOM ---
     const viewAlbumModal = document.getElementById('view-album-modal');
     const editBioModal = document.getElementById('edit-bio-modal');
     const lightboxContent = document.querySelector('.lightbox-content');
@@ -43,7 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE LA GALERÍA LIGHTBOX ---
     const showMediaAtIndex = (index) => {
-        if (index < 0 || index >= currentAlbumMedia.length) return;
+        if (!currentAlbumMedia || currentAlbumMedia.length === 0) {
+            viewAlbumModal.classList.remove('is-visible');
+            return;
+        }
+        if (index < 0 || index >= currentAlbumMedia.length) {
+            index = Math.max(0, Math.min(index, currentAlbumMedia.length - 1));
+        }
+        
         currentIndex = index;
         const item = currentAlbumMedia[index];
         
@@ -56,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             mediaElement = document.createElement('img');
         }
-        // La URL pública ya viene completa desde Supabase
-        mediaElement.src = item.file_path; 
+        mediaElement.src = item.file_path; // La URL ya viene completa desde el backend
+        
         lightboxContent.appendChild(mediaElement);
         lightboxCaption.textContent = `Archivo ${index + 1} de ${currentAlbumMedia.length}`;
 
@@ -83,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Error al cargar el contenido del álbum.');
         }
     };
-    
+
     // --- LÓGICA DE MODALES ---
     const setupModal = (modal, openTrigger) => {
         if (!modal) return;
@@ -96,9 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.add('is-visible');
             });
         }
+        
         if (closeBtn) {
             closeBtn.addEventListener('click', closeAction);
         }
+        
         if (!modal.classList.contains('modal-lightbox')) {
             window.addEventListener('click', e => { if (e.target === modal) closeAction(); });
         }
@@ -145,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 setupVisitorNav();
             }
+
         } catch (error) {
             console.error('Error al cargar el perfil:', error);
         }
@@ -227,23 +238,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const setupVisitorNav = () => {
+        const nav = document.getElementById('profile-nav');
         if (token) {
-             document.getElementById('profile-nav').innerHTML = `
+             nav.innerHTML = `
                 <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
                 <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>`;
-             document.getElementById('logout-btn').addEventListener('click', (e) => {
+             nav.querySelector('#logout-btn').addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.clear();
                 window.location.href = '/index.html';
             });
         } else {
-            document.getElementById('profile-nav').innerHTML = `
+            nav.innerHTML = `
                 <a href="/index.html#registro" class="btn btn-primary">Crear Cuenta</a>
                 <a href="/index.html#login" class="btn btn-secondary">Iniciar Sesión</a>`;
         }
     };
     
     // --- INVOCACIÓN INICIAL ---
-    setupModal(viewAlbumModal);
+    setupModal(viewAlbumModal); // Activa el botón de cerrar 'X' de la galería
     loadProfileData();
 });
