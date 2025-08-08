@@ -11,14 +11,26 @@ from flask_cors import CORS
 from supabase import create_client, Client
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}) # Permite todas las origins para depurar
 
-# --- Configuración de la Base de Datos ---
+# --- Configuración de la Base de Datos (Corregida y Simplificada) ---
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+if DATABASE_URL:
+    # Configuración para producción (Render/Supabase)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # Configuración para desarrollo local si la variable no está presente
+    print("ADVERTENCIA: No se encontró DATABASE_URL, usando configuración local.")
+    DB_USER = 'Exponiendo_Tacna_admin'
+    DB_PASSWORD = 'pillito05122002'
+    DB_HOST = 'localhost'
+    DB_PORT = '5432'
+    DB_NAME = 'Exponiendo_Tacna_db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -28,7 +40,7 @@ jwt = JWTManager(app)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
-BUCKET_NAME = "database" # El nombre de tu bucket en Supabase
+BUCKET_NAME = "database"
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
@@ -87,11 +99,8 @@ def register_user():
         return jsonify({'error': 'Faltan datos de registro'}), 400
     if User.query.filter_by(username=data['username']).first() or User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'El usuario o email ya existe'}), 409
-        
-    # --- INICIO DE LA CORRECCIÓN ---
+    
     new_user = User(username=data['username'], email=data['email'])
-    new_user.is_admin = False # Se asigna el valor después de crear el objeto
-    # --- FIN DE LA CORRECCIÓN ---
     new_user.set_password(data['password'])
     db.session.add(new_user)
     db.session.commit()
@@ -272,6 +281,7 @@ def get_album(album_id):
 def handle_album_update_delete(album_id):
     user_id = int(get_jwt_identity())
     album = Album.query.get_or_404(album_id)
+
     if album.user_id != user_id:
         return jsonify({'error': 'No tienes permiso para esta acción'}), 403
 
@@ -287,7 +297,7 @@ def handle_album_update_delete(album_id):
             files_to_delete = [media.file_path for media in album.media]
             if files_to_delete:
                 try: supabase.storage.from_(BUCKET_NAME).remove(files_to_delete)
-                except Exception as e: print(f"Error al eliminar archivos de Supabase: {e}")
+                except Exception as e: print(f"Error eliminando archivos de Supabase: {e}")
         
         db.session.delete(album)
         db.session.commit()
@@ -295,6 +305,3 @@ def handle_album_update_delete(album_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
