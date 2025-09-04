@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Álbum...</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav id="main-nav" class="main-nav">
+                </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="album-content" class="album-page-section">
+            <div id="album-header">
+                <h1 id="album-title"></h1>
+                <p id="album-owner"></p>
+                <p id="album-description"></p>
+            </div>
+            
+            <div id="media-grid" class="album-grid">
+                </div>
+        </section>
+
+        <section id="comments-section" class="comments-page-section">
+            <h2>Comentarios</h2>
+            <form id="comment-form">
+                <textarea name="text" placeholder="Escribe un comentario..." required></textarea>
+                <button type="submit" class="btn btn-primary">Enviar Comentario</button>
+            </form>
+            <div id="comments-list">
+                </div>
+        </section>
+    </main>
+
+    <script src="/static/js/album.js"></script>
+</body>
+</html>
