@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Álbum...</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav id="main-nav" class="main-nav"></nav>
+        </div>
+    </header>
+
+    <main class="container album-container">
+        <section class="album-meta-header">
+            <h1 id="album-title"></h1>
+            <p id="album-owner"></p>
+            <p id="album-description"></p>
+            <div id="album-tags-container" class="album-tags">
+                </div>
+            <div class="album-actions">
+                <button id="back-button" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Regresar
+                </button>
+            </div>
+        </section>
+
+        <section id="media-feed">
+            </section>
+
+        <section id="comments-section" class="comments-page-section">
+            <h2>Comentarios</h2>
+            <form id="comment-form">
+                <textarea name="text" placeholder="Escribe un comentario..." required></textarea>
+                <button type="submit" class="btn btn-primary">Enviar Comentario</button>
+            </form>
+            <div id="comments-list">
+                </div>
+        </section>
+    </main>
+
+    <script src="/static/js/album.js"></script>
+</body>
+</html>
