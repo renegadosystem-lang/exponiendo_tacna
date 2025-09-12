@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-JWT-Extended
+Flask-Cors
+psycopg2-binary
+gunicorn
+supabase
+Flask-SocketIO
+Flask-Migrate
