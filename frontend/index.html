@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Exponiendo Tacna</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero-section {
+            background-image: url('/static/img/hero-background.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <a href="#registro" class="btn btn-primary">Crear Cuenta</a>
+                <a href="#login" class="btn btn-secondary">Iniciar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <h1>Tu Archivo Privado de Momentos Íntimos</h1>
+                <p>Descubre, colecciona y organiza contenido exclusivo. Únete a nuestra comunidad y empieza a explorar.</p>
+                <a href="#registro" class="btn btn-primary btn-lg">Únete Gratis</a>
+            </div>
+        </section>
+
+        <section class="featured-albums">
+            <div class="container">
+                <h2 class="section-title">Los Más Vistos de la Comunidad</h2>
+                <p class="section-subtitle">El contenido que está marcando tendencia ahora mismo.</p>
+                <div class="album-grid" id="album-grid-container">
+                    <p class="loading-message">Cargando los álbumes más populares...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="container">
+                <h2 class="section-title">Todas las Herramientas que Necesitas</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <h3>🖼️ Crea Álbumes</h3>
+                        <p>Organiza tu contenido en álbumes temáticos. Fácil de crear, fácil de compartir con quien tú decidas.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>#️⃣ Etiqueta tu Contenido</h3>
+                        <p>Usa etiquetas para encontrar y clasificar tus fotos y videos. La búsqueda avanzada te permite filtrar por lo que más te gusta.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔒 Control Total</h3>
+                        <p>Tú decides quién ve tu contenido. Gestiona tus álbumes y tu perfil con total privacidad y seguridad.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="registro" class="cta-section">
+            <div class="container">
+                <h2>¿Listo para Empezar?</h2>
+                <p>Crea tu cuenta gratuita y obtén acceso instantáneo a todas las funcionalidades. Sube tu propio contenido, explora el de otros y únete a la conversación.</p>
+                
+                <form id="register-form" class="register-form">
+                    <div id="register-message"></div>
+                    <input type="text" name="username" placeholder="Nombre de usuario" required>
+                    <input type="email" name="email" placeholder="Correo electrónico" required>
+                    <input type="password" name="password" placeholder="Contraseña" required>
+                    <button type="submit" class="btn btn-primary btn-lg">Crear Mi Cuenta Ahora</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2025 Exponiendo Tacna. Todos los derechos reservados.</p>
+            <nav class="footer-nav">
+                <a href="#terminos">Términos de Servicio</a>
+                <a href="#privacidad">Política de Privacidad</a>
+                <a href="#contacto">Contacto</a>
+            </nav>
+        </div>
+    </footer>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <form id="login-form">
+                <div id="login-error-message" class="error-message" style="display: none;"></div>
+                <input type="text" name="username" placeholder="Nombre de usuario" required>
+                <input type="password" name="password" placeholder="Contraseña" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="terms-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Términos de Servicio y Exención de Responsabilidad</h2>
+            <div class="terms-content">
+                <p><strong>Uso exclusivo para mayores de 18 años.</strong> Al acceder a este sitio, confirmas ser mayor de edad en tu jurisdicción.</p>
+                <p>Todo el contenido multimedia presente en este sitio es subido y compartido exclusivamente por los usuarios. Los administradores no se hacen responsables por el material compartido por terceros.</p>
+                <p>Para compartir cualquier contenido, el usuario declara y garantiza que tiene el permiso explícito y verificable de todas las personas que aparecen en dicho contenido.</p>
+                <hr>
+                <h3>Política de Tolerancia Cero Contra el Abuso Infantil</h3>
+                <p>Este sitio web tiene una política de <strong>tolerancia cero, absoluta e innegociable</strong>, contra la pornografía infantil y cualquier forma de explotación o abuso de menores. La distribución de este material es un <strong>delito grave</strong>.</p>
+                <p>Cualquier usuario que suba o comparta este tipo de contenido será <strong>expulsado permanentemente</strong> y <strong>denunciado a las autoridades</strong> legales, entregando toda la información de registro disponible.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Política de Privacidad</h2>
+            <div class="terms-content">
+                <p><strong>Tu privacidad es nuestra prioridad.</strong> Nos comprometemos a proteger tus datos y a garantizar tu anonimato.</p>
+                <p><strong>1. Datos Recopilados:</strong> Únicamente almacenamos tu nombre de usuario, correo electrónico y contraseña encriptada. Te animamos a usar un seudónimo para maximizar tu anonimato.</p>
+                <p><strong>2. Seguridad:</strong> Utilizamos encriptación y las mejores prácticas de seguridad para proteger tu información. Tu contraseña se almacena de forma segura (hashed) y es inaccesible para nosotros.</p>
+                <p><strong>3. No Compartimos tus Datos:</strong> Jamás venderemos o compartiremos tu información con terceros, excepto en caso de una orden judicial o para cooperar con autoridades en la investigación de actividades ilegales graves.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Contacto</h2>
+            <div class="contact-content">
+                <p>Para reportes, sugerencias o cualquier consulta, contáctanos a través de nuestra cuenta oficial de Instagram.</p>
+                <a href="https://www.instagram.com/exponiendo_tacna/" target="_blank" rel="noopener noreferrer" class="contact-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    <span>@exponiendo_tacna</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // La URL de tu backend en Render
+            const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
+            
+            // Inicializar todas las funcionalidades
+            setupModals();
+            setupForms(backendUrl);
+            loadMostViewedAlbums(backendUrl);
+        });
+
+        // --- LÓGICA DE MODALES ---
+        function setupModals() {
+            const modalTriggers = {
+                'login-modal': 'a[href="#login"]',
+                'terms-modal': 'a[href="#terminos"]',
+                'privacy-modal': 'a[href="#privacidad"]',
+                'contact-modal': 'a[href="#contacto"]'
+            };
+
+            for (const modalId in modalTriggers) {
+                const modal = document.getElementById(modalId);
+                const trigger = document.querySelector(modalTriggers[modalId]);
+                const closeBtn = modal.querySelector('.close-button');
+
+                if (modal && trigger) {
+                    trigger.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        modal.classList.add('is-visible');
+                    });
+                }
+                
+                if (modal && closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        modal.classList.remove('is-visible');
+                    });
+                }
+                
+                if(modal) {
+                    window.addEventListener('click', (e) => {
+                        if (e.target == modal) {
+                            modal.classList.remove('is-visible');
+                        }
+                    });
+                }
+            }
+        }
+
+        // --- LÓGICA DE FORMULARIOS ---
+        function setupForms(backendUrl) {
+            const registerForm = document.getElementById('register-form');
+            const loginForm = document.getElementById('login-form');
+            
+            if (loginForm) {
+                const errorMessageDiv = document.getElementById('login-error-message');
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    errorMessageDiv.style.display = 'none';
+                    const username = e.target.username.value;
+                    const password = e.target.password.value;
+
+                    fetch(`${backendUrl}/api/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (ok) {
+                            localStorage.setItem('accessToken', data.access_token);
+                            localStorage.setItem('username', data.username);
+                            window.location.href = '/dashboard.html';
+                        } else {
+                            showError(errorMessageDiv, data.error || 'Ocurrió un error inesperado.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error en la red:', error);
+                        showError(errorMessageDiv, 'No se pudo conectar con el servidor.');
+                    });
+                });
+            }
+
+            if (registerForm) {
+                const messageDiv = document.getElementById('register-message');
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    messageDiv.style.display = 'none';
+                    const username = e.target.username.value;
+                    const email = e.target.email.value;
+                    const password = e.target.password.value;
+
+                    fetch(`${backendUrl}/api/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, email, password })
+                    })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (ok) {
+                            showMessage(messageDiv, data.message, 'success');
+                            registerForm.reset();
+                        } else {
+                            showMessage(messageDiv, data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error en la red:', error);
+                        showMessage(messageDiv, 'No se pudo conectar con el servidor.', 'error');
+                    });
+                });
+            }
+        }
+
+        // --- LÓGICA PARA CARGAR ÁLBUMES ---
+        function loadMostViewedAlbums(backendUrl) {
+            const gridContainer = document.getElementById('album-grid-container');
+            const apiUrl = `${backendUrl}/api/albums?sort_by=views_count&sort_order=desc&per_page=4`;
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error de red');
+                    return response.json();
+                })
+                .then(data => {
+                    gridContainer.innerHTML = '';
+                    if (data.albums && data.albums.length > 0) {
+                        data.albums.forEach(album => {
+                            const thumbnailUrl = album.thumbnail_url || '/static/img/placeholder-default.jpg';
+                            const profileUrl = `/profile.html?user=${album.owner_username}`;
+                            const albumCard = document.createElement('div');
+                            albumCard.className = 'album-card';
+                            albumCard.innerHTML = `
+                                <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
+                                <div class="album-info">
+                                    <h3>${album.title}</h3>
+                                    <p>por: <a href="${profileUrl}" class="profile-link">@${album.owner_username || 'usuario'}</a></p>
+                                    <div class="album-stats"><span>👁️ ${album.views_count} vistas</span></div>
+                                </div>`;
+                            gridContainer.appendChild(albumCard);
+                        });
+                    } else {
+                        gridContainer.innerHTML = '<p>Aún no hay álbumes para mostrar.</p>';
+                    }
+                }).catch(error => {
+                    console.error('Error al cargar álbumes:', error);
+                    gridContainer.innerHTML = '<p>No se pudieron cargar los álbumes.</p>';
+                });
+        }
+
+        // --- FUNCIONES DE AYUDA ---
+        function showError(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = type === 'success' ? 'success-message' : 'error-message';
+            element.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
