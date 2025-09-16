@@ -160,6 +160,9 @@
             setupModals();
             setupForms(backendUrl);
             loadMostViewedAlbums(backendUrl);
+
+            // --- CAMBIO: Añadimos un listener para los clics en los álbumes ---
+            setupAlbumClickListener();
         });
 
         // --- LÓGICA DE MODALES ---
@@ -217,19 +220,20 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
                     })
-                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
-                    .then(({ ok, data }) => {
-                        if (ok) {
-                            localStorage.setItem('accessToken', data.access_token);
-                            localStorage.setItem('username', data.username);
-                            window.location.href = '/dashboard.html';
-                        } else {
-                            showError(errorMessageDiv, data.error || 'Ocurrió un error inesperado.');
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || 'Error desconocido') });
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        localStorage.setItem('accessToken', data.access_token);
+                        localStorage.setItem('username', data.username);
+                        window.location.href = '/dashboard.html';
                     })
                     .catch(error => {
                         console.error('Error en la red:', error);
-                        showError(errorMessageDiv, 'No se pudo conectar con el servidor.');
+                        showError(errorMessageDiv, error.message || 'No se pudo conectar con el servidor.');
                     });
                 });
             }
@@ -282,6 +286,11 @@
                             const profileUrl = `/profile.html?user=${album.owner_username}`;
                             const albumCard = document.createElement('div');
                             albumCard.className = 'album-card';
+                            
+                            // --- CAMBIO: Añadimos un cursor y un data-attribute ---
+                            albumCard.style.cursor = 'pointer';
+                            albumCard.dataset.albumId = album.id;
+
                             albumCard.innerHTML = `
                                 <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                                 <div class="album-info">
@@ -300,6 +309,30 @@
                 });
         }
 
+        // --- CAMBIO: Nueva función para manejar los clics ---
+        function setupAlbumClickListener() {
+            const gridContainer = document.getElementById('album-grid-container');
+            gridContainer.addEventListener('click', function(e) {
+                // Busca la tarjeta del álbum que fue clickeada
+                const card = e.target.closest('.album-card');
+
+                // Si se hizo clic en una tarjeta, pero NO en un enlace dentro de ella (como el perfil del autor)
+                if (card && !e.target.closest('a')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // 1. Muestra el mensaje
+                    alert('Para ver el álbum debes crear una cuenta o iniciar sesión.');
+
+                    // 2. Redirige a la sección de registro
+                    const registerSection = document.getElementById('registro');
+                    if (registerSection) {
+                        registerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        }
+
         // --- FUNCIONES DE AYUDA ---
         function showError(element, message) {
             element.textContent = message;
@@ -314,4 +347,3 @@
     </script>
 </body>
 </html>
-
