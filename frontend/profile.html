@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav id="profile-nav" class="main-nav"></nav>
+        </div>
+    </header>
+
+    <main id="profile-main-content">
+        <div id="profile-banner" class="profile-banner">
+            <div id="profile-owner-banner-controls" class="profile-owner-controls" style="display: none;">
+                <label for="banner-upload-input" class="btn btn-secondary">Cambiar</label>
+                <input type="file" id="banner-upload-input" accept="image/*" style="display: none;">
+                <button id="delete-banner-btn" class="btn btn-danger">Eliminar</button>
+            </div>
+        </div>
+        
+        <div class="container profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar-wrapper">
+                    <div id="profile-avatar" class="profile-avatar"></div>
+                     <div id="profile-owner-avatar-controls" class="profile-owner-controls" style="display: none;">
+                        <label for="avatar-upload-input" class="btn btn-secondary">Cambiar</label>
+                        <input type="file" id="avatar-upload-input" accept="image/*" style="display: none;">
+                        <button id="delete-avatar-btn" class="btn btn-danger">Eliminar</button>
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h1 id="profile-username">Cargando...</h1>
+                    <p id="profile-bio" class="profile-bio"></p>
+                    <div id="profile-stats" class="owner-stats">
+                        <span id="followers-count"><strong>-</strong> seguidores</span>
+                        <span id="following-count"><strong>-</strong> seguidos</span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button id="follow-btn" class="btn btn-primary" style="display: none;">Seguir</button>
+                    <button id="edit-bio-btn" class="btn btn-secondary" data-modal-target="#edit-bio-modal" style="display: none;">Editar Biografía</button>
+                </div>
+            </div>
+
+            <div class="profile-albums-section">
+                <h2>Álbumes</h2>
+                <div id="profile-albums-grid" class="album-grid"></div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="edit-bio-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2>Editar Biografía</h2>
+            <form id="edit-bio-form">
+                <textarea name="bio" required rows="5"></textarea>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="confirm-title">Confirmar Acción</h2>
+            <p id="confirm-message">¿Estás seguro?</p>
+            <div id="confirm-buttons">
+                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-ok-btn" class="btn btn-primary">Aceptar</button>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/profile.js"></script>
+</body>
+</html>
