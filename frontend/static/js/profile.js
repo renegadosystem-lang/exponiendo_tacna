@@ -1,6 +1,10 @@
-// /static/js/profile.js (Versión Final y Sincronizada)
+// /static/js/profile.js (Versión Completa y Definitiva)
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Añadimos una clase al body para que main.js sepa que no debe autoejecutarse
+    document.body.classList.add('profile-page');
+
+    // --- 1. CONFIGURACIÓN Y VARIABLES ---
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
     const token = localStorage.getItem('accessToken');
     const urlParams = new URLSearchParams(window.location.search);
@@ -20,17 +24,109 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-main-content').innerHTML = `<div class="container"><h1>Perfil no especificado</h1></div>`;
         return;
     }
-    
-    const elements = { /* ... (código sin cambios) ... */ };
-    function showAlert(title, message) { /* ... (código sin cambios) ... */ }
-    const showToast = (message, type = 'success') => { /* ... (código sin cambios) ... */ };
-    const showConfirm = (title, message) => { /* ... (código sin cambios) ... */ };
-    const fetchWithAuth = (url, options = {}) => { /* ... (código sin cambios) ... */ };
 
+    // --- 2. SELECTORES DE ELEMENTOS DEL DOM ---
+    const elements = {
+        profileNav: document.getElementById('profile-nav'),
+        profileMainContent: document.getElementById('profile-main-content'),
+        profileUsername: document.getElementById('profile-username'),
+        profileBio: document.getElementById('profile-bio'),
+        profileStats: document.getElementById('profile-stats'),
+        profileAvatar: document.getElementById('profile-avatar'),
+        profileBanner: document.getElementById('profile-banner'),
+        albumsGrid: document.getElementById('profile-albums-grid'),
+        avatarControls: document.getElementById('profile-owner-avatar-controls'),
+        bannerControls: document.getElementById('profile-owner-banner-controls'),
+        avatarUploadInput: document.getElementById('avatar-upload-input'),
+        bannerUploadInput: document.getElementById('banner-upload-input'),
+        deleteAvatarBtn: document.getElementById('delete-avatar-btn'),
+        deleteBannerBtn: document.getElementById('delete-banner-btn'),
+        editBioBtn: document.getElementById('edit-bio-btn'),
+        followBtn: document.getElementById('follow-btn'),
+        editBioModal: document.getElementById('edit-bio-modal'),
+        editBioForm: document.getElementById('edit-bio-form')
+    };
+    
+    // --- 3. FUNCIONES DE UTILIDAD ---
+    function showAlert(title, message) {
+        return new Promise(resolve => {
+            const modal = document.getElementById('alert-modal');
+            if (!modal) {
+                alert(message);
+                resolve();
+                return;
+            }
+            const modalTitle = document.getElementById('alert-title');
+            const modalMessage = document.getElementById('alert-message');
+            const okBtn = document.getElementById('alert-ok-btn');
+            
+            if(modalTitle) modalTitle.textContent = title;
+            if(modalMessage) modalMessage.textContent = message;
+
+            const close = () => {
+                modal.classList.remove('is-visible');
+                okBtn.replaceWith(okBtn.cloneNode(true));
+                resolve();
+            };
+            
+            if(okBtn) okBtn.onclick = close;
+            modal.classList.add('is-visible');
+        });
+    }
+
+    const showToast = (message, type = 'success') => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 4000);
+    };
+
+    const showConfirm = (title, message) => {
+        return new Promise(resolve => {
+            const modal = document.getElementById('confirm-modal');
+            if (!modal) { resolve(window.confirm(message)); return; }
+            const titleEl = document.getElementById('confirm-title');
+            const messageEl = document.getElementById('confirm-message');
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            if(titleEl) titleEl.textContent = title;
+            if(messageEl) messageEl.textContent = message;
+            const close = (decision) => {
+                modal.classList.remove('is-visible');
+                okBtn.replaceWith(okBtn.cloneNode(true));
+                cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                resolve(decision);
+            };
+            if(okBtn) okBtn.onclick = () => close(true);
+            if(cancelBtn) cancelBtn.onclick = () => close(false);
+            modal.onclick = (e) => { if (e.target === modal) close(false); };
+            modal.classList.add('is-visible');
+        });
+    };
+
+    const fetchWithAuth = (url, options = {}) => {
+        const currentToken = localStorage.getItem('accessToken');
+        const headers = { ...options.headers };
+        if (currentToken) { headers['Authorization'] = `Bearer ${currentToken}`; }
+        if (options.body && !(options.body instanceof FormData)) { headers['Content-Type'] = 'application/json'; }
+        return fetch(`${backendUrl}${url}`, { ...options, headers });
+    };
+
+    // --- 4. CARGA DE DATOS Y RENDERIZADO ---
     const loadProfileData = async () => {
         try {
             const response = await fetchWithAuth(`/api/profiles/${profileUsername}`);
-            if (!response.ok) { /* ... */ return; }
+            if (!response.ok) {
+                elements.profileMainContent.innerHTML = `<div class="container"><h1>Usuario no encontrado</h1></div>`;
+                return;
+            }
             const profile = await response.json();
             profileDataStore = profile;
 
@@ -38,9 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.profileUsername.textContent = profile.username;
             elements.profileBio.textContent = profile.bio || "Este usuario aún no ha añadido una biografía.";
             
-            const statsContainer = document.getElementById('profile-stats');
-            if(statsContainer) {
-                statsContainer.innerHTML = `<span id="followers-count"><strong>${profile.followers_count}</strong> seguidores</span> <span id="following-count"><strong>${profile.following_count}</strong> seguidos</span>`;
+            if(elements.profileStats) {
+                elements.profileStats.innerHTML = `<span id="followers-count"><strong>${profile.followers_count}</strong> seguidores</span> <span id="following-count"><strong>${profile.following_count}</strong> seguidos</span>`;
             }
 
             const defaultAvatar = '/static/img/placeholder-default.jpg';
@@ -56,17 +151,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.albumsGrid.innerHTML = '<p>Este usuario aún no tiene álbumes publicados.</p>';
             }
 
+            // --- ESTE ES EL CAMBIO CLAVE ---
+            // 1. Construimos el header dinámicamente
             if (currentUserId && currentUserId === profile.id) {
                 setupOwnerControls(profile);
             } else {
                 setupVisitorControls(profile);
             }
-
-            // JUSTO DESPUÉS DE CREAR EL HEADER, INICIALIZAMOS LOS LISTENERS DE main.js
+            
+            // 2. JUSTO DESPUÉS, llamamos a la función global de main.js para que active los botones
             if (window.initializeGlobalEventListeners) {
                 window.initializeGlobalEventListeners();
             }
-        } catch (error) { console.error('Error al cargar el perfil:', error); }
+            // --- FIN DEL CAMBIO CLAVE ---
+
+        } catch (error) { 
+            console.error('Error al cargar el perfil:', error);
+            elements.profileMainContent.innerHTML = `<div class="container"><h1>Error al cargar el perfil</h1></div>`;
+        }
     };
 
     const createAlbumCard = (album) => {
@@ -182,21 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-
-        elements.profileNav.addEventListener('click', (e) => {
-            if (e.target.matches('#logout-btn')) {
-                e.preventDefault();
-                localStorage.clear();
-                window.location.href = '/index.html';
-            }
-        });
     }
 
     function setupModalListeners() {
         document.body.addEventListener('click', e => {
+            // La lógica para ABRIR modales ahora está en main.js
+            // Mantenemos solo la lógica para CERRARlos
             const target = e.target;
-            // La lógica para abrir modales ahora está en main.js, 
-            // solo mantenemos la lógica para CERRAR modales.
             if (target.closest('.close-button')) {
                 target.closest('.modal').classList.remove('is-visible');
             } else if (target.matches('.modal.is-visible')) {
@@ -205,13 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- CÓDIGO FALTANTE: Bloqueo de clics para visitantes ---
     function setupGuestAlbumClickListener() {
         elements.albumsGrid.addEventListener('click', async (e) => {
             if (e.target.closest('.album-card-link')) {
-                e.preventDefault(); // Detener la navegación
+                e.preventDefault();
                 await showAlert('Acceso Restringido', 'Para ver el álbum debes crear una cuenta o iniciar sesión.');
-                window.location.href = '/index.html#login'; // Redirigir
+                window.location.href = '/index.html#login';
             }
         });
     }
@@ -222,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModalListeners();
 
     if (!token) {
-        // Si el usuario no está logueado, se activa el bloqueo.
         setupGuestAlbumClickListener();
     }
 });
