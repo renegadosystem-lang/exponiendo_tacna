@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. CONFIGURACIÓN Y VARIABLES ---
     const backendUrl = 'https://exponiendo-tacna-api2.onrender.com';
-    const token = localStorage.getItem('accessToken');
     const urlParams = new URLSearchParams(window.location.search);
     const profileUsername = urlParams.get('user');
 
     let currentUserId = null;
     let profileDataStore = null; 
+    const token = localStorage.getItem('accessToken');
 
     if (token) {
         try {
@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error al cargar el perfil:', error);
+            elements.profileMainContent.innerHTML = `<p>Error al cargar el perfil. Por favor, intenta de nuevo más tarde.</p>`;
         }
     };
 
@@ -125,12 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.profileNav.innerHTML = `
             <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
             <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>`;
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.clear();
-            window.location.href = '/index.html';
-        });
-
+        // El listener para logout se añade una sola vez en setupEventListeners
+        
         elements.avatarControls.style.display = 'flex';
         elements.bannerControls.style.display = 'flex';
         elements.editBioBtn.style.display = 'inline-block';
@@ -145,11 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
              nav.innerHTML = `
                 <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
                 <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>`;
-             nav.querySelector('#logout-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.clear();
-                window.location.href = '/index.html';
-            });
         } else {
             nav.innerHTML = `
                 <a href="/index.html#registro" class="btn btn-primary">Crear Cuenta</a>
@@ -159,144 +151,93 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUserId && currentUserId !== profile.id) {
             elements.followBtn.style.display = 'inline-block';
             elements.followBtn.textContent = profile.is_followed ? 'Dejar de Seguir' : 'Seguir';
-            elements.followBtn.className = profile.is_followed ? 'btn btn-secondary' : 'btn btn-primary';
-            elements.followBtn.onclick = handleFollowToggle;
-        }
-        elements.avatarControls.style.display = 'none';
-        elements.bannerControls.style.display = 'none';
-    };
-
-    const handleFollowToggle = async () => {
-        if (!token) {
-            window.location.href = '/index.html#login';
-            return;
-        }
-        try {
-            const action = profileDataStore.is_followed ? 'unfollow' : 'follow';
-            const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}/${action}`, { method: 'POST' });
-            if (response.ok) {
-                profileDataStore.is_followed = !profileDataStore.is_followed;
-                profileDataStore.followers_count += profileDataStore.is_followed ? 1 : -1;
-                elements.followersCount.innerHTML = `<strong>${profileDataStore.followers_count}</strong> seguidores`;
-                elements.followBtn.textContent = profileDataStore.is_followed ? 'Dejar de Seguir' : 'Seguir';
-                elements.followBtn.className = profileDataStore.is_followed ? 'btn btn-secondary' : 'btn btn-primary';
-            } else {
-                console.error('Error al cambiar el estado de seguimiento');
-            }
-        } catch (error) {
-            console.error('Error en la solicitud de seguimiento:', error);
         }
     };
 
-    elements.editBioBtn.addEventListener('click', () => {
-        elements.editBioModal.style.display = 'block';
-    });
-
-    elements.editBioModal.querySelector('.close').addEventListener('click', () => {
-        elements.editBioModal.style.display = 'none';
-    });
-
-    window.addEventListener('click', (event) => {
-        if (event.target === elements.editBioModal) {
-            elements.editBioModal.style.display = 'none';
+    const handleImageUpload = async (file, type) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = `/api/my-profile/${type}`;
+        const response = await fetchWithAuth(url, { method: 'POST', body: formData });
+        if(response.ok) {
+            alert('Imagen actualizada con éxito');
+            loadProfileData();
+        } else {
+            alert('Error al subir la imagen.');
         }
-    });
+    };
 
-    elements.editBioForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const newBio = elements.editBioForm.bio.value.trim();
-        try {
-            const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}`, {
-                method: 'PUT',
-                body: JSON.stringify({ bio: newBio })
-            });
-            if (response.ok) {
-                profileDataStore.bio = newBio;
-                elements.profileBio.textContent = newBio || "Este usuario aún no ha añadido una biografía.";
-                elements.editBioModal.style.display = 'none';
+    function setupEventListeners() {
+        elements.editBioForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await fetchWithAuth('/api/my-profile', { method: 'PUT', body: JSON.stringify({ bio: e.target.bio.value }) });
+            if(response.ok) {
+                elements.editBioModal.classList.remove('is-visible');
+                loadProfileData();
             } else {
-                console.error('Error al actualizar la biografía');
+                alert("Error al guardar la biografía.");
             }
-        } catch (error) {
-            console.error('Error en la solicitud de actualización de biografía:', error);
-        }
-    });
+        });
 
-    elements.avatarUploadInput.addEventListener('change', async () => {
-        const file = elements.avatarUploadInput.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('profile_picture', file);
-            try {
-                const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}/picture`, {
-                    method: 'PUT',
-                    body: formData
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    elements.profileAvatar.style.backgroundImage = `url('${data.profile_picture_url}')`;
-                } else {
-                    console.error('Error al subir la foto de perfil');
-                }
-            } catch (error) {
-                console.error('Error en la solicitud de subida de foto de perfil:', error);
+        elements.avatarUploadInput.addEventListener('change', (e) => handleImageUpload(e.target.files[0], 'picture'));
+        elements.bannerUploadInput.addEventListener('change', (e) => handleImageUpload(e.target.files[0], 'banner'));
+        
+        elements.deleteAvatarBtn.addEventListener('click', async () => {
+            if (confirm('¿Estás seguro?')) {
+                const response = await fetchWithAuth('/api/my-profile/picture', { method: 'DELETE' });
+                if (response.ok) { alert('Foto de perfil eliminada.'); loadProfileData(); }
+                else { alert('No se pudo eliminar la foto.'); }
             }
-        }
-    });
-
-    elements.bannerUploadInput.addEventListener('change', async () => {
-        const file = elements.bannerUploadInput.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('banner_image', file);
-            try {
-                const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}/banner`, {
-                    method: 'PUT',
-                    body: formData
-
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    elements.profileBanner.style.backgroundImage = `url('${data.banner_image_url}')`;
-                } else {
-                    console.error('Error al subir la imagen de banner');
-                }
-            } catch (error) {
-                console.error('Error en la solicitud de subida de imagen de banner:', error);
+        });
+        
+        elements.deleteBannerBtn.addEventListener('click', async () => {
+            if (confirm('¿Estás seguro?')) {
+                const response = await fetchWithAuth('/api/my-profile/banner', { method: 'DELETE' });
+                if (response.ok) { alert('Banner eliminado.'); loadProfileData(); }
+                else { alert('No se pudo eliminar el banner.'); }
             }
-        }
-    });
+        });
 
-    elements.deleteAvatarBtn.addEventListener('click', async () => {
-        if (confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) {
-            try {
-                const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}/picture`, { method: 'DELETE' });
-                if (response.ok) {
-                    elements.profileAvatar.style.backgroundImage = `url('/static/img/placeholder-default.jpg')`;
-                } else {
-                    console.error('Error al eliminar la foto de perfil');
-                }
-            } catch (error) {
-                console.error('Error en la solicitud de eliminación de foto de perfil:', error);
+        elements.followBtn.addEventListener('click', async () => {
+            if (!profileDataStore) return;
+            const response = await fetchWithAuth(`/api/users/${profileDataStore.id}/follow`, { method: 'POST' });
+            if(response.ok) {
+                loadProfileData(); 
+            } else {
+                alert("Error al intentar seguir al usuario.");
             }
-        }
-    });
+        });
 
-    elements.deleteBannerBtn.addEventListener('click', async () => {
-        if (confirm('¿Estás seguro de que deseas eliminar tu imagen de banner?')) {
-            try {
-                const response = await fetchWithAuth(`/api/profiles/${profileDataStore.username}/banner`, { method: 'DELETE' });
-                if (response.ok) {
-                    elements.profileBanner.style.backgroundImage = `url('/static/img/hero-background.jpg')`;
-                } else {
-                    console.error('Error al eliminar la imagen de banner');
-                }
-            } catch (error) {
-                console.error('Error en la solicitud de eliminación de imagen de banner:', error);
+        // Añadir listener de logout aquí para que exista siempre
+        elements.profileNav.addEventListener('click', (e) => {
+            if (e.target.matches('#logout-btn')) {
+                e.preventDefault();
+                localStorage.clear();
+                window.location.href = '/index.html';
             }
-        }
-    });
+        });
+    }
 
-    // --- 6. INICIAR CARGA DE DATOS ---
+    function setupModalListeners() {
+        document.body.addEventListener('click', e => {
+            const target = e.target;
+            const modalTarget = target.closest('[data-modal-target]');
+            if (modalTarget) {
+                e.preventDefault();
+                const modal = document.querySelector(modalTarget.dataset.modalTarget);
+                if(modal) modal.classList.add('is-visible');
+            }
+            if (target.closest('.close-button')) {
+                target.closest('.modal').classList.remove('is-visible');
+            } else if (target.matches('.modal.is-visible')) {
+                target.classList.remove('is-visible');
+            }
+        });
+    }
+
+    // --- INVOCACIÓN INICIAL ---
     loadProfileData();
+    setupEventListeners();
+    setupModalListeners();
 });
