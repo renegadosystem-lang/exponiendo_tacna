@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <a href="/dashboard.html" class="btn btn-primary">Mi Dashboard</a>
+                <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="profile-main-content">
+        <div class="profile-banner-container">
+            <div id="profile-banner" class="profile-banner"></div>
+            <div class="container profile-info-wrapper"> <div class="profile-header">
+                    <div id="profile-avatar" class="profile-avatar"></div>
+                    <div class="profile-meta">
+                        <h1 id="profile-username">Cargando...</h1>
+                        <p id="profile-bio" class="profile-bio"></p>
+                        <div class="profile-stats">
+                            <span id="followers-count">0 seguidores</span>
+                            <span id="following-count">0 seguidos</span>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button id="edit-profile-btn" class="btn btn-secondary" style="display: none;">
+                            <i class="fas fa-edit"></i> Editar Perfil
+                        </button>
+                        <button id="follow-btn" class="btn btn-primary" style="display: none;">
+                            <i class="fas fa-user-plus"></i> Seguir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h2 class="section-title">Álbumes de <span id="profile-albums-username"></span></h2>
+            <div id="profile-albums-grid" class="album-grid">
+                <p>Cargando álbumes...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="edit-profile-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2>Editar Perfil</h2>
+            <form id="edit-profile-form">
+                <div class="form-group">
+                    <label for="edit-bio">Biografía:</label>
+                    <textarea id="edit-bio" name="bio" rows="4" placeholder="Escribe algo sobre ti..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-avatar-upload" class="btn btn-secondary custom-file-upload">
+                        Cambiar Avatar
+                    </label>
+                    <input id="edit-avatar-upload" type="file" name="avatar" accept="image/*" style="display: none;">
+                    <span id="avatar-filename" class="file-upload-status"></span>
+                </div>
+                <div class="form-group">
+                    <label for="edit-banner-upload" class="btn btn-secondary custom-file-upload">
+                        Cambiar Banner
+                    </label>
+                    <input id="edit-banner-upload" type="file" name="banner" accept="image/*" style="display: none;">
+                    <span id="banner-filename" class="file-upload-status"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/static/js/profile.js"></script>
+</body>
+</html>
