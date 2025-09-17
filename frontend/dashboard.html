@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Exponiendo Tacna</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <button class="nav-icon-btn" id="search-btn" data-modal-target="#search-modal" title="Buscar"><i class="fas fa-search"></i></button>
+                <button class="nav-icon-btn" id="notifications-btn" title="Notificaciones">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                <button class="nav-icon-btn" id="chat-btn" title="Chat"><i class="fas fa-comment-dots"></i></button>
+                <a href="#" id="my-profile-link" class="btn btn-secondary">Mi Perfil</a>
+                <button id="create-album-btn" data-modal-target="#create-album-modal" class="btn btn-primary">Crear Álbum</button>
+                <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <div class="tabs">
+                <button class="tab-link active" data-tab="explore">Explorar Comunidad</button>
+                <button class="tab-link" data-tab="my-albums">Mis Álbumes</button>
+                <button class="tab-link" data-tab="saved-albums">Guardados</button>
+            </div>
+
+            <div id="explore" class="tab-content active">
+                <h2 class="section-title">Álbumes Recientes de la Comunidad</h2>
+                <div id="explore-grid" class="album-grid"></div>
+                <div id="pagination-controls" class="pagination-controls"></div>
+            </div>
+
+            <div id="my-albums" class="tab-content">
+                <h2 class="section-title">Mis Álbumes Creados</h2>
+                <div id="my-albums-grid" class="album-grid"></div>
+            </div>
+
+            <div id="saved-albums" class="tab-content">
+                <h2 class="section-title">Mis Álbumes Guardados</h2>
+                <p class="section-subtitle">Aquí encontrarás todos los álbumes que has marcado para ver más tarde.</p>
+                <div id="saved-albums-grid" class="album-grid"></div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="create-album-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2>Crear Nuevo Álbum</h2>
+            <form id="create-album-form">
+                <div class="form-error-message" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="create-title">Título del álbum:</label>
+                    <input id="create-title" type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-description">Descripción (opcional):</label>
+                    <textarea id="create-description" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="create-tags">Etiquetas (separadas por comas):</label>
+                    <input id="create-tags" type="text" name="tags">
+                </div>
+                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                <div class="form-group">
+                    <label for="create-album-files" class="btn btn-secondary custom-file-upload">
+                        Seleccionar Archivos (fotos/videos)...
+                    </label>
+                    <input id="create-album-files" type="file" name="files" required multiple accept="image/*,video/*" style="display: none;">
+                    <span id="create-album-status" class="file-upload-status"></span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Crear y Subir</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="confirm-title">Confirmar Acción</h2>
+            <p id="confirm-message">¿Estás seguro?</p>
+            <div class="confirm-buttons">
+                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-ok-btn" class="btn btn-primary">Aceptar</button>
+            </div>
+        </div>
+    </div>  
+    <div id="alert-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="alert-title">Aviso</h2>
+            <p id="alert-message"></p>
+            <button id="alert-ok-btn" class="btn btn-primary">Aceptar</button>
+        </div>
+    </div>
+    <div id="search-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2>Buscar Usuarios o Álbumes</h2>
+            <div class="form-group">
+                <input type="text" id="search-input" placeholder="Escribe para buscar..." autocomplete="off">
+            </div>
+            <div id="search-results-container"></div>
+        </div>
+    </div>
+    <div id="notifications-panel">
+    <div class="panel-header">
+        <h3>Notificaciones</h3>
+    </div>
+    <div id="notifications-list">
+        </div>
+    <div class="panel-footer">
+        <button id="mark-all-as-read-btn">Marcar todo como leído</button>
+        <button id="clear-read-notifications-btn">Limpiar Leídas</button>
+    </div>
+</div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
