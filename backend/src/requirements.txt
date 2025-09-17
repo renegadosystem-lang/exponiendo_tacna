@@ -1,0 +1,20 @@
+# --- Framework Principal ---
+Flask
+Flask-Cors
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+Flask-SocketIO
+
+# --- Servidor de Producción y Worker para SocketIO ---
+gunicorn
+eventlet
+
+# --- Base de Datos y Entorno ---
+psycopg2-binary
+python-dotenv
+SQLAlchemy
+alembic
+
+# --- Cliente de Supabase ---
+supabase
