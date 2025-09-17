@@ -1640,4 +1640,14 @@ button.search-result-item {
 /* Cuando el botón tiene la clase 'has-unread', mostramos el punto */
 .nav-icon-btn.has-unread .notification-badge {
     display: block;
+
+}
+
+/* /static/css/style.css (AÑADIR ESTO AL FINAL) */
+
+/* --- FIX: Z-INDEX PARA MODALES DE CONFIRMACIÓN Y ALERTA --- */
+/* Le damos una prioridad más alta para que siempre aparezcan al frente */
+#confirm-modal,
+#alert-modal {
+    z-index: 3000;
 }
