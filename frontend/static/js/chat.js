@@ -1,9 +1,7 @@
-// /static/js/chat.js (Versión Refactorizada y Final)
+// /static/js/chat.js (Versión Final Corregida)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Las funciones y variables globales (backendUrl, fetchWithAuth, etc.) se usan desde utils.js y main.js
     const token = localStorage.getItem('accessToken');
-    
     if (!token) {
         window.location.href = '/index.html';
         return;
@@ -17,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messagesArea = document.getElementById('messages-area');
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
+    const searchInput = document.getElementById('conversation-search-input');
     
     let currentUserId = null;
     let activeChatUserId = null;
@@ -32,34 +31,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica de Socket.IO ---
-    const socket = io(backendUrl); // backendUrl viene de utils.js
+    const socket = io(window.backendUrl);
 
     socket.on('connect', () => {
-        console.log('Conectado al servidor de sockets');
+        console.log('Conectado al servidor de sockets en la página de chat');
         socket.emit('authenticate', { token });
     });
 
     socket.on('new_message', (message) => {
-        // Si el mensaje es para el chat activo, lo muestra
-        if (message.sender_id === activeChatUserId && message.recipient_id === currentUserId) {
+        if ((message.sender_id === activeChatUserId && message.recipient_id === currentUserId) ||
+            (message.sender_id === currentUserId && message.recipient_id === activeChatUserId)) {
             appendMessage(message);
         }
-        // Siempre se recargan las conversaciones para actualizar la lista
         loadConversations();
-    });
-
-    socket.on('message_sent', (message) => {
-        // Muestra el mensaje enviado por el propio usuario inmediatamente
-        if (message.sender_id === currentUserId && message.recipient_id === activeChatUserId) {
-            appendMessage(message);
-            loadConversations(); // Recargar para que aparezca al principio de la lista
-        }
     });
 
     // --- Carga y Renderizado de Datos ---
     const loadConversations = async () => {
         try {
-            const response = await fetchWithAuth('/api/chats'); // usa fetchWithAuth de utils.js
+            const response = await fetchWithAuth('/api/chats');
             if (!response.ok) throw new Error('No se pudieron cargar las conversaciones.');
             allConversations = await response.json();
             renderConversations(allConversations);
@@ -73,9 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!otherUser || !otherUser.id || activeChatUserId === otherUser.id) return;
         
         activeChatUserId = otherUser.id;
-        messagesArea.innerHTML = '<p>Cargando mensajes...</p>';
+        messagesArea.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
         
-        chatPartnerAvatar.src = otherUser.avatar || '/static/img/placeholder-default.jpg';
+        // CORRECCIÓN: Usar siempre profile_picture_url para consistencia
+        chatPartnerAvatar.src = otherUser.profile_picture_url || otherUser.avatar || '/static/img/placeholder-default.jpg';
         chatPartnerUsername.textContent = otherUser.username;
         chatHeader.style.display = 'flex';
         messageForm.style.display = 'flex';
@@ -99,16 +90,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const renderConversations = (conversations) => {
-        if (!conversations.length) {
-            conversationsList.innerHTML = '<p style="text-align:center; padding: 1rem; color: var(--text-muted);">No tienes conversaciones.</p>';
+        const query = searchInput.value.toLowerCase();
+        const filteredConversations = conversations.filter(convo => 
+            convo.other_user.username.toLowerCase().includes(query)
+        );
+
+        if (filteredConversations.length === 0) {
+            conversationsList.innerHTML = '<p style="text-align:center; padding: 1rem; color: var(--text-muted);">No se encontraron conversaciones.</p>';
             return;
         }
-        conversationsList.innerHTML = conversations.map(convo => `
+        conversationsList.innerHTML = filteredConversations.map(convo => `
             <div class="conversation-item ${convo.other_user.id === activeChatUserId ? 'active' : ''}" data-user-id="${convo.other_user.id}">
                 <img src="${convo.other_user.profile_picture_url || '/static/img/placeholder-default.jpg'}" alt="${convo.other_user.username}">
                 <div class="conversation-info">
                     <h4>${convo.other_user.username}</h4>
-                    <p class="last-message">${convo.last_message.content}</p>
+                    <p class="last-message">${convo.last_message.sender_id === currentUserId ? 'Tú: ' : ''}${convo.last_message.content}</p>
                 </div>
                 ${convo.unread_count > 0 ? `<span class="unread-badge">${convo.unread_count}</span>` : ''}
             </div>
@@ -143,9 +139,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const otherUserId = parseInt(target.dataset.userId, 10);
             const convo = allConversations.find(c => c.other_user.id === otherUserId);
             if(convo) {
-                loadMessages({id: convo.other_user.id, username: convo.other_user.username, avatar: convo.other_user.profile_picture_url});
+                loadMessages(convo.other_user);
             }
         }
+    });
+
+    searchInput.addEventListener('input', () => {
+        renderConversations(allConversations);
     });
 
     messageForm.addEventListener('submit', (e) => {
@@ -156,11 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 token: token, recipient_id: activeChatUserId, content: content,
             };
             socket.emit('private_message', messagePayload);
+            appendMessage({
+                sender_id: currentUserId,
+                recipient_id: activeChatUserId,
+                content: content,
+                created_at: new Date().toISOString()
+            });
             messageInput.value = '';
         }
     });
 
-    // Listener para iniciar chat desde la búsqueda en el modal
     document.addEventListener('startChat', (e) => {
         const userInfo = e.detail;
         loadMessages(userInfo);
