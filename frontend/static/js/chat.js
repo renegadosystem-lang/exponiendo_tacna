@@ -1,4 +1,4 @@
-// /static/js/chat.js (Versión Final Corregida)
+// /static/js/chat.js (Versión con Scroll Automático Corregido)
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('accessToken');
@@ -34,15 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io(window.backendUrl);
 
     socket.on('connect', () => {
-        console.log('Conectado al servidor de sockets en la página de chat');
+        console.log('Conectado al servidor de sockets');
         socket.emit('authenticate', { token });
     });
 
     socket.on('new_message', (message) => {
-        if ((message.sender_id === activeChatUserId && message.recipient_id === currentUserId) ||
-            (message.sender_id === currentUserId && message.recipient_id === activeChatUserId)) {
+        // Si el mensaje es para el chat activo, lo muestra
+        if (message.sender_id === activeChatUserId && message.recipient_id === currentUserId) {
             appendMessage(message);
         }
+        // Siempre se recargan las conversaciones para actualizar la lista y los contadores
         loadConversations();
     });
 
@@ -65,8 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeChatUserId = otherUser.id;
         messagesArea.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
         
-        // CORRECCIÓN: Usar siempre profile_picture_url para consistencia
-        chatPartnerAvatar.src = otherUser.profile_picture_url || otherUser.avatar || '/static/img/placeholder-default.jpg';
+        chatPartnerAvatar.src = otherUser.profile_picture_url || '/static/img/placeholder-default.jpg';
         chatPartnerUsername.textContent = otherUser.username;
         chatHeader.style.display = 'flex';
         messageForm.style.display = 'flex';
@@ -117,6 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const appendMessage = (message) => {
+        // Ocultar el mensaje de bienvenida si existe
+        const welcomeMessage = messagesArea.querySelector('.chat-welcome');
+        if (welcomeMessage) welcomeMessage.style.display = 'none';
+        
         messagesArea.insertAdjacentHTML('beforeend', createMessageBubble(message));
         scrollToBottom();
     };
@@ -156,13 +160,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 token: token, recipient_id: activeChatUserId, content: content,
             };
             socket.emit('private_message', messagePayload);
+            
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Añade el mensaje a la UI inmediatamente para una respuesta instantánea (actualización optimista)
             appendMessage({
                 sender_id: currentUserId,
-                recipient_id: activeChatUserId,
                 content: content,
                 created_at: new Date().toISOString()
             });
+            // --- FIN DE LA CORRECCIÓN ---
+
             messageInput.value = '';
+            messageInput.focus();
         }
     });
 
