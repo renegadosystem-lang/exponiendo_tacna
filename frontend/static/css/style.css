@@ -1224,6 +1224,22 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 
 /* --- Estilos del Panel de Notificaciones Mejorado --- */
+#notifications-panel {
+    display: none;
+    position: fixed;
+    top: 75px; /* Más abajo del header */
+    right: 110px; /* Ajustar para alinearlo */
+    width: 380px; /* Más angosto */
+    max-height: 500px; /* Altura máxima controlada */
+    background-color: var(--content-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 2000;
+    overflow: hidden;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
     
     /* Animación de entrada */
     transform-origin: top right;
