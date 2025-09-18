@@ -1,9 +1,7 @@
-// /static/js/main.js (Versión Final y Definitiva)
+// /static/js/main.js (Versión Final a Prueba de Errores)
 
-// --- LÓGICA DE SOCKET.IO GLOBAL (SE EJECUTA UNA SOLA VEZ POR PÁGINA) ---
 const token = localStorage.getItem('accessToken');
-if (token) {
-    // Usamos window.backendUrl que es la variable global definida en utils.js
+if (token && typeof io !== 'undefined') {
     const socket = io(window.backendUrl); 
 
     socket.on('connect', () => {
@@ -20,7 +18,6 @@ if (token) {
         
         const notificationsPanel = document.getElementById('notifications-panel');
         if (notificationsPanel && notificationsPanel.classList.contains('visible')) {
-            // Llama a una función global para recargar notificaciones si el panel está abierto
             if (window.fetchNotifications) {
                 window.fetchNotifications();
             }
@@ -28,7 +25,13 @@ if (token) {
     });
 }
 
+// Se hace global para que otros scripts puedan accederla
+let allConversations = [];
+let fetchNotifications; // Declarar en un scope más amplio
+
 function initializeGlobalEventListeners() {
+    const currentToken = localStorage.getItem('accessToken');
+    
     // --- Selectores de Elementos Globales ---
     const searchBtn = document.getElementById('search-btn');
     const notificationsBtn = document.getElementById('notifications-btn');
@@ -40,8 +43,6 @@ function initializeGlobalEventListeners() {
     const myProfileLink = document.getElementById('my-profile-link');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // --- Configuración Inicial del Header ---
-    const currentToken = localStorage.getItem('accessToken');
     if (currentToken) {
         const username = localStorage.getItem('username');
         if (myProfileLink && username) myProfileLink.href = `/profile.html?user=${username}`;
@@ -58,9 +59,9 @@ function initializeGlobalEventListeners() {
         if(chatBtn) chatBtn.style.display = 'none';
     }
     
-    // --- Lógica de Búsqueda ---
     let searchTimeout;
     const performSearch = async (query) => {
+        if (!searchResultsContainer) return;
         if (!query || query.length < 2) {
             searchResultsContainer.innerHTML = '';
             return;
@@ -75,6 +76,7 @@ function initializeGlobalEventListeners() {
     };
 
     const renderSearchResults = (results) => {
+        if (!searchResultsContainer) return;
         let html = '<h4>Usuarios</h4>';
         if (results.users && results.users.length) {
             html += results.users.map(u => `<div class="search-result-item"><span>@${u.username}</span><button class="btn btn-secondary start-chat" data-user-info='{"id": ${u.id}, "username": "${u.username}", "avatar": "${u.profile_picture_url}"}'>Chat</button></div>`).join('');
@@ -90,10 +92,10 @@ function initializeGlobalEventListeners() {
         searchResultsContainer.innerHTML = html;
     };
 
-    // --- Lógica de Notificaciones ---
-    const fetchNotifications = async () => {
+    fetchNotifications = async () => {
         try {
             const response = await fetchWithAuth('/api/notifications');
+            if (!response.ok) throw new Error('Sesión inválida o expirada.');
             const notifications = await response.json();
             renderNotifications(notifications);
             
@@ -109,23 +111,22 @@ function initializeGlobalEventListeners() {
             console.error("Error cargando notificaciones:", error);
         }
     };
-    window.fetchNotifications = fetchNotifications; // Hacemos la función accesible globalmente
+    window.fetchNotifications = fetchNotifications;
 
     const renderNotifications = (notifications) => {
         const list = document.getElementById('notifications-list');
         if (!list) return;
+        if (!Array.isArray(notifications)) return; // Verificación extra de seguridad
 
         if (notifications.length === 0) {
             list.innerHTML = `<div class="notifications-empty"><i class="fas fa-bell-slash"></i><p>Todo está al día</p><span>No tienes notificaciones nuevas.</span></div>`;
             return;
         }
-
         const notificationIcons = {
             'new_follower': 'fa-user-plus', 'new_like': 'fa-heart',
             'new_comment': 'fa-comment', 'new_reply': 'fa-comments',
             'new_message': 'fa-envelope', 'report_received': 'fa-flag'
         };
-
         list.innerHTML = notifications.map(n => `
             <div class="notification-item-wrapper">
                 <a href="${n.link}" class="notification-item ${n.is_read ? 'read' : ''}">
@@ -140,13 +141,13 @@ function initializeGlobalEventListeners() {
         `).join('');
     };
     
-    // --- Lógica de Vista Previa de Chat ---
     const fetchChatPreview = async () => {
         const list = document.getElementById('chat-preview-list');
         if(!list) return;
         list.innerHTML = `<p style="padding: 1rem; text-align: center; color: var(--text-muted);">Cargando chats...</p>`;
         try {
             const response = await fetchWithAuth('/api/chats');
+            if (!response.ok) throw new Error('Sesión inválida o expirada.');
             const conversations = await response.json();
             renderChatPreview(conversations);
         } catch (error) {
@@ -158,6 +159,8 @@ function initializeGlobalEventListeners() {
     const renderChatPreview = (conversations) => {
         const list = document.getElementById('chat-preview-list');
         if (!list) return;
+        if (!Array.isArray(conversations)) return; // Verificación extra de seguridad
+
         if (conversations.length === 0) {
             list.innerHTML = `<p style="padding: 1rem; text-align: center; color: var(--text-muted);">No tienes conversaciones.</p>`;
             return;
@@ -174,33 +177,58 @@ function initializeGlobalEventListeners() {
         `).join('');
     };
 
-    // --- Lógica de Eventos Centralizada ---
+    const closeAllModals = () => document.querySelectorAll('.modal.is-visible').forEach(modal => modal.classList.remove('is-visible'));
+
+    // --- Lógica de Eventos Centralizada y a Prueba de Errores ---
+    if (notificationsBtn) {
+        notificationsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (chatPreviewPanel) chatPreviewPanel.classList.remove('visible');
+            if (notificationsPanel) {
+                const isVisible = notificationsPanel.classList.toggle('visible');
+                if (isVisible) fetchNotifications();
+            }
+        });
+    }
+
+    if (chatBtn) {
+        chatBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (notificationsPanel) notificationsPanel.classList.remove('visible');
+            if (chatPreviewPanel) {
+                const isVisible = chatPreviewPanel.classList.toggle('visible');
+                if (isVisible) fetchChatPreview();
+            }
+        });
+    }
+    
     document.body.addEventListener('click', async (e) => {
         const modalTarget = e.target.closest('[data-modal-target]');
-        const closeButton = e.target.closest('.close-button');
-
         if (modalTarget) {
             e.preventDefault();
             const modal = document.querySelector(modalTarget.dataset.modalTarget);
             if (modal) modal.classList.add('is-visible');
         }
+
+        const closeButton = e.target.closest('.close-button');
         if (closeButton || e.target.matches('.modal.is-visible')) {
             closeAllModals();
         }
         
         const markAllReadBtn = e.target.closest('#mark-all-as-read-btn');
-        const clearReadBtn = e.target.closest('#clear-read-notifications-btn');
-        const deleteNotificationBtn = e.target.closest('.delete-notification-btn');
-
         if (markAllReadBtn) {
             await fetchWithAuth('/api/notifications/read', { method: 'POST' });
             fetchNotifications();
         }
+
+        const clearReadBtn = e.target.closest('#clear-read-notifications-btn');
         if (clearReadBtn) {
             await fetchWithAuth('/api/me/notifications/read', { method: 'DELETE' });
             showToast("Notificaciones leídas eliminadas.");
             fetchNotifications();
         }
+
+        const deleteNotificationBtn = e.target.closest('.delete-notification-btn');
         if (deleteNotificationBtn) {
             e.preventDefault();
             e.stopPropagation();
@@ -226,33 +254,11 @@ function initializeGlobalEventListeners() {
         });
     }
 
-    if (notificationsBtn) {
-        notificationsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            chatPreviewPanel?.classList.remove('visible');
-            const isVisible = notificationsPanel.classList.toggle('visible');
-            if (isVisible) fetchNotifications();
-        });
-    }
-
-    if (chatBtn) {
-        chatBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            notificationsPanel?.classList.remove('visible');
-            const isVisible = chatPreviewPanel.classList.toggle('visible');
-            if (isVisible) fetchChatPreview();
-        });
-    }
-    
-    const closeAllModals = () => {
-        document.querySelectorAll('.modal.is-visible').forEach(modal => modal.classList.remove('is-visible'));
-    };
-
     document.body.addEventListener('keydown', (e) => {
         if (e.key === "Escape") {
             closeAllModals();
-            notificationsPanel?.classList.remove('visible');
-            chatPreviewPanel?.classList.remove('visible');
+            if (notificationsPanel) notificationsPanel.classList.remove('visible');
+            if (chatPreviewPanel) chatPreviewPanel.classList.remove('visible');
         }
     });
 
@@ -264,7 +270,7 @@ function initializeGlobalEventListeners() {
 window.initializeGlobalEventListeners = initializeGlobalEventListeners;
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!document.body.classList.contains('profile-page')) {
+    if (!document.body.classList.contains('profile-page') && !document.body.classList.contains('album-page')) {
         initializeGlobalEventListeners();
     }
 });
