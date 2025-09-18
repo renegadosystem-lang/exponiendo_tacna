@@ -356,11 +356,23 @@ def get_saved_albums_route():
     albums_list = []
     for rel in saved_album_relations:
         album = rel.album
+        
+        # --- INICIO DE LA CORRECCIÓN ---
+        # Añadimos la misma lógica de respaldo que en las otras secciones
+        thumbnail_url = get_public_url(album.thumbnail_path)
+        if not thumbnail_url:
+            # Si no hay thumbnail, busca el primer archivo multimedia del álbum
+            first_media = album.media.order_by(Media.position.asc(), Media.created_at.asc()).first()
+            thumbnail_url = get_public_url(first_media.file_path) if first_media else None
+        # --- FIN DE LA CORRECCIÓN ---
+
         albums_list.append({
-            'id': album.id, 'title': album.title,
-            'owner_username': album.owner.username, 'user_id': album.user_id,
+            'id': album.id,
+            'title': album.title,
+            'owner_username': album.owner.username,
+            'user_id': album.user_id,
             'views_count': album.views_count, 
-            'thumbnail_url': get_public_url(album.thumbnail_path)
+            'thumbnail_url': thumbnail_url # Ahora usamos la URL corregida
         })
     return jsonify({'albums': albums_list})
 
@@ -852,4 +864,5 @@ def handle_private_message(data):
 #  7. PUNTO DE ENTRADA PRINCIPAL
 # =========================================================================
 if __name__ == '__main__':
+
     socketio.run(app, debug=True)
