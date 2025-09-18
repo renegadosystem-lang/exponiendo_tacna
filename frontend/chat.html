@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat - Exponiendo Tacna</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
@@ -17,15 +17,10 @@
              <nav class="main-nav">
                 <button class="nav-icon-btn" id="search-btn" data-modal-target="#search-modal" title="Buscar"><i class="fas fa-search"></i></button>
                 <div class="nav-icon-wrapper">
-                    <button class="nav-icon-btn" id="notifications-btn" title="Notificaciones">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge"></span>
-                    </button>
+                    <button class="nav-icon-btn" id="notifications-btn" title="Notificaciones"><i class="fas fa-bell"></i><span class="notification-badge"></span></button>
                 </div>
                 <div class="nav-icon-wrapper">
-                    <button class="nav-icon-btn" id="chat-btn" title="Chat" style="color: var(--primary-color);">
-                        <i class="fas fa-comment-dots"></i>
-                    </button>
+                    <button class="nav-icon-btn" id="chat-btn" title="Chat" style="color: var(--primary-color);"><i class="fas fa-comment-dots"></i></button>
                 </div>
                 <a href="#" id="my-profile-link" class="btn btn-secondary">Mi Perfil</a>
                 <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>
@@ -34,36 +29,29 @@
     </header>
 
     <main>
-        <div class="container chat-container-v2">
-            <aside class="conversations-panel-v2">
+        <div class="container chat-container-v3">
+            <aside class="conversations-panel-v3">
                 <div class="panel-header">
                     <h2>Chats</h2>
-                    <button id="new-message-btn" class="btn btn-primary" data-modal-target="#search-modal" title="Nuevo Mensaje"><i class="fas fa-edit"></i></button>
+                    <button id="new-message-btn" class="btn btn-primary" data-modal-target="#search-modal" title="Nuevo Mensaje"><i class="fas fa-pen"></i></button>
                 </div>
-                <div class="conversation-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="conversation-search-input" placeholder="Buscar...">
-                </div>
-                <div class="conversations-list" id="conversations-list">
+                <div id="conversations-list" class="conversations-list">
                     </div>
             </aside>
 
-            <section class="chat-panel-v2" id="chat-panel">
-                 <div class="chat-header-v2" id="chat-header" style="display: none;">
+            <section class="chat-panel-v3" id="chat-panel">
+                 <div class="chat-header-v3" id="chat-header" style="display: none;">
                     <img id="chat-partner-avatar" src="/static/img/placeholder-default.jpg" alt="Avatar">
-                    <div class="chat-header-info">
-                        <h3 id="chat-partner-username"></h3>
-                        <span class="chat-partner-status">en línea</span>
-                    </div>
+                    <h3 id="chat-partner-username"></h3>
                  </div>
-                 <div class="messages-area-v2" id="messages-area">
+                 <div class="messages-area-v3" id="messages-area">
                     <div class="chat-welcome">
                         <i class="fas fa-comments"></i>
                         <h2>Tus Mensajes</h2>
                         <p>Selecciona una conversación para empezar a chatear.</p>
                     </div>
                  </div>
-                 <div class="chat-input-form-v2" id="message-form" style="display: none;">
+                 <div class="chat-input-form-v3" id="message-form" style="display: none;">
                     <div id="message-input" class="chat-input-editable" contenteditable="true" data-placeholder="Escribe un mensaje..."></div>
                     <button type="submit" id="send-message-btn" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
                  </div>
@@ -71,12 +59,8 @@
         </div>
     </main>
     
-    <div id="toast-container"></div>
-    <div id="search-modal" class="modal"></div>
-    <div id="notifications-panel"></div>
-    <div id="chat-preview-panel"></div>
-    <script src="/static/js/utils.js?v=4"></script>
-    <script src="/static/js/main.js?v=4"></script>
-    <script src="/static/js/chat.js?v=4"></script>
+    <script src="/static/js/utils.js?v=5"></script>
+    <script src="/static/js/main.js?v=5"></script>
+    <script src="/static/js/chat.js?v=5"></script>
 </body>
 </html>
