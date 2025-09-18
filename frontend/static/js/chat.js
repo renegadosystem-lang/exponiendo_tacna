@@ -1,11 +1,11 @@
-// /static/js/chat.js (Versión para Rediseño Minimalista)
+// /static/js/chat.js (Versión para Rediseño "Discord" Simplificado)
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('accessToken');
     if (!token) { window.location.href = '/index.html'; return; }
 
-    // --- Selectores del DOM ---
     const conversationsList = document.getElementById('conversations-list');
+    const chatPanel = document.getElementById('chat-panel');
     const chatHeader = document.getElementById('chat-header');
     const chatPartnerAvatar = document.getElementById('chat-partner-avatar');
     const chatPartnerUsername = document.getElementById('chat-partner-username');
@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
     const sendMessageBtn = document.getElementById('send-message-btn');
-    
+    const backToConversationsBtn = document.getElementById('back-to-conversations');
+
     let currentUserId = null;
     let activeChatUserId = null;
     let allConversations = [];
@@ -27,11 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const socket = io(window.backendUrl);
     socket.on('connect', () => socket.emit('authenticate', { token }));
-
     socket.on('new_message', (message) => {
-        if (message.sender_id === activeChatUserId) {
-            appendMessage(message);
-        }
+        if (message.sender_id === activeChatUserId) appendMessage(message);
         loadConversations();
     });
 
@@ -41,13 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('No se pudieron cargar las conversaciones.');
             allConversations = await response.json();
             renderConversations(allConversations);
-        } catch (error) {
-            console.error('Error cargando conversaciones:', error);
-        }
+        } catch (error) { console.error('Error cargando conversaciones:', error); }
     };
     
     const loadMessages = async (otherUser) => {
         activeChatUserId = otherUser.id;
+        chatPanel.classList.add('active'); // Para vista en móviles
         messagesArea.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
         
         chatPartnerAvatar.src = otherUser.profile_picture_url || '/static/img/placeholder-default.jpg';
@@ -59,13 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const partnerEl = document.querySelector(`.conversation-item-v3[data-user-id="${otherUser.id}"]`);
         if (partnerEl) partnerEl.classList.add('active');
 
-        try {
-            const response = await fetchWithAuth(`/api/chats/${otherUser.id}`);
-            const messages = await response.json();
-            renderMessages(messages);
-        } catch (error) {
-            messagesArea.innerHTML = '<p>Error al cargar mensajes.</p>';
-        }
+        const response = await fetchWithAuth(`/api/chats/${otherUser.id}`);
+        const messages = await response.json();
+        renderMessages(messages);
     };
     
     const renderConversations = (conversations) => {
@@ -90,18 +83,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderMessages = (messages) => {
         messagesArea.innerHTML = '';
-        messages.forEach(msg => appendMessage(msg));
+        let lastSenderId = null;
+        messages.forEach(msg => {
+            const showHeader = msg.sender_id !== lastSenderId;
+            appendMessage(msg, showHeader);
+            lastSenderId = msg.sender_id;
+        });
         scrollToBottom();
     };
     
-    const appendMessage = (message) => {
+    const appendMessage = (message, showHeader = true) => {
         const welcome = messagesArea.querySelector('.chat-welcome');
         if (welcome) welcome.remove();
+        
+        const isSent = message.sender_id === currentUserId;
+        const sender = isSent ? null : allConversations.find(c => c.other_user.id === message.sender_id)?.other_user;
+        const senderName = isSent ? 'Tú' : (sender?.username || 'Usuario');
+        const senderAvatar = isSent ? '' : (sender?.profile_picture_url || '/static/img/placeholder-default.jpg');
 
-        const messageRow = document.createElement('div');
-        messageRow.className = `message-row ${message.sender_id === currentUserId ? 'sent' : 'received'}`;
-        messageRow.innerHTML = `<div class="message-text">${message.content}</div>`;
-        messagesArea.appendChild(messageRow);
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.dataset.senderId == message.sender_id) {
+            showHeader = false;
+        }
+
+        const messageEl = document.createElement('div');
+        messageEl.classList.add('message-group');
+        if (!showHeader) messageEl.classList.add('compact');
+        messageEl.dataset.senderId = message.sender_id;
+
+        if (showHeader) {
+            messageEl.innerHTML = `
+                <img src="${senderAvatar}" alt="avatar" class="message-avatar">
+                <div class="message-body">
+                    <div class="message-sender">${senderName}</div>
+                    <div class="message-text">${message.content}</div>
+                </div>
+                <div class="message-actions"><i class="fas fa-ellipsis-h"></i></div>`;
+        } else {
+            messageEl.innerHTML = `<div class="message-body"><div class="message-text">${message.content}</div></div><div class="message-actions"><i class="fas fa-ellipsis-h"></i></div>`;
+        }
+        messagesArea.appendChild(messageEl);
         scrollToBottom();
     };
 
@@ -111,32 +132,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = messageInput.innerText.trim();
         if (content && activeChatUserId) {
             socket.emit('private_message', { token, recipient_id: activeChatUserId, content });
-            appendMessage({ sender_id: currentUserId, content });
+            appendMessage({ sender_id: currentUserId, content, created_at: new Date().toISOString() });
             messageInput.innerHTML = '';
             messageInput.focus();
         }
     };
 
-    if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
-    if (messageInput) {
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
+    sendMessageBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
     
-    if (conversationsList) {
-        conversationsList.addEventListener('click', (e) => {
-            const target = e.target.closest('.conversation-item-v3');
-            if (target) {
-                const userId = parseInt(target.dataset.userId, 10);
-                const convo = allConversations.find(c => c.other_user.id === userId);
-                if(convo) loadMessages(convo.other_user);
-            }
-        });
-    }
+    conversationsList.addEventListener('click', (e) => {
+        const target = e.target.closest('.conversation-item-v3');
+        if (target) {
+            const userId = parseInt(target.dataset.userId, 10);
+            const convo = allConversations.find(c => c.other_user.id === userId);
+            if(convo) loadMessages(convo.other_user);
+        }
+    });
+
+    backToConversationsBtn.addEventListener('click', () => {
+        chatPanel.classList.remove('active');
+    });
+
+    document.addEventListener('startChat', (e) => loadMessages(e.detail));
 
     function checkDeepLink() {
         const userToChat = localStorage.getItem('chat_with_user');
