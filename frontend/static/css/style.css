@@ -1,7 +1,7 @@
 /*
 =================================================================
   STYLESHEET: EXPONIENDO TACNA (Versión Refactorizada)
-  AUTHOR: Lucifer & Gemini
+  AUTHOR: Lucifer 
   DESCRIPTION: Estilos unificados para una experiencia de usuario consistente.
 =================================================================
 */
@@ -1226,7 +1226,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 /* --- Estilos del Panel de Notificaciones Mejorado --- */
 #notifications-panel {
     display: none;
-    position: absolute;
+    position: fixed;
     top: 75px; /* Más abajo del header */
     right: 20px; /* Ajustar para alinearlo */
     width: 360px; /* Más angosto */
@@ -1831,4 +1831,5 @@ button.search-result-item {
 }
 #chat-preview-panel .panel-footer {
     text-align: center;
+
 }
