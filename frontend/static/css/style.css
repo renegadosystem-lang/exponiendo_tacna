@@ -1833,3 +1833,40 @@ button.search-result-item {
 #chat-preview-panel .panel-footer {
     text-align: center;
 }
+
+/*
+=================================================================
+  BLOQUE DE CORRECCIÓN FINAL: POSICIONAMIENTO DE PANELES
+=================================================================
+*/
+
+/* 1. Preparamos los "anclajes" */
+.nav-icon-wrapper {
+    position: relative;
+}
+
+/* 2. Reposicionamos los paneles para que dependan de los anclajes, no de la pantalla */
+#notifications-panel,
+#chat-preview-panel {
+    position: absolute; /* Cambiamos de fixed a absolute */
+    top: 55px; /* Distancia desde el icono */
+    right: 0;  /* Alineado a la derecha del ancla */
+    /* Eliminamos las propiedades 'right' que contaban píxeles desde el borde de la pantalla */
+    /* El resto de los estilos (width, background, etc.) se mantienen */
+}
+
+/* 3. Ajuste fino para centrar cada panel con su icono */
+#notifications-panel {
+    transform: translateX(30%);
+}
+
+#chat-preview-panel {
+    transform: translateX(30%);
+}
+
+/* 4. Ocultamos los paneles cuando el ancla no está visible */
+/* Esto previene que aparezcan si un usuario no logueado llega a una página interna */
+.nav-icon-wrapper:not(:has(.nav-icon-btn)) > #notifications-panel,
+.nav-icon-wrapper:not(:has(.nav-icon-btn)) > #chat-preview-panel {
+    display: none;
+}
