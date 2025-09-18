@@ -1856,8 +1856,9 @@ button.search-result-item {
 
 
 /*
+/*
 =================================================================
-  BLOQUE DE REDISEÑO FINAL Y DEFINITIVO PARA LA PÁGINA DE CHAT
+  BLOQUE DE REDISEÑO FINAL v2 PARA LA PÁGINA DE CHAT
 =================================================================
 */
 
@@ -1868,6 +1869,7 @@ button.search-result-item {
 /* --- Contenedor Principal del Nuevo Chat --- */
 .chat-container-v2 {
     height: calc(100vh - 120px);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     background-color: var(--content-bg);
     box-shadow: 0 8px 30px rgba(0,0,0,0.4);
@@ -1884,43 +1886,6 @@ button.search-result-item {
     display: flex;
     flex-direction: column;
 }
-.conversations-panel-v2 .panel-header {
-    background-color: transparent;
-    border-bottom: 1px solid var(--border-color);
-}
-.conversation-search {
-    padding: 0.75rem 1rem;
-    position: relative;
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-}
-.conversation-search i {
-    position: absolute;
-    left: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-}
-#conversation-search-input {
-    background-color: var(--content-bg);
-    border: 1px solid transparent;
-    border-radius: 20px;
-    width: 100%;
-    padding: 0.6rem 1rem 0.6rem 2.5rem;
-}
-#conversation-search-input:focus {
-    border-color: var(--primary-color);
-}
-.conversations-list {
-    overflow-y: auto;
-    flex-grow: 1;
-}
-.conversation-item.active {
-    background-color: var(--primary-color);
-}
-.conversation-item.active h4, .conversation-item.active .last-message {
-    color: white;
-}
 
 /* --- Panel de Chat Activo (Derecha) --- */
 .chat-panel-v2 {
@@ -1929,50 +1894,61 @@ button.search-result-item {
     flex-direction: column;
 }
 
+/* 1. Header del Chat (Más compacto y elegante) */
 .chat-header-v2 {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     background-color: var(--content-bg);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 10;
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1.25rem; /* Menos padding vertical */
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 .chat-header-v2 img {
-    width: 45px; height: 45px; border-radius: 50%; object-fit: cover;
+    width: 36px; /* Más pequeño */
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
 }
-.chat-header-v2 h3 { margin: 0; font-size: 1.1rem; }
-.chat-header-v2 .chat-partner-status { font-size: 0.8rem; color: var(--success-color); }
+.chat-header-v2 h3 {
+    margin: 0;
+    font-size: 1rem; /* Más pequeño */
+    font-weight: 600;
+}
+.chat-header-v2 .chat-partner-status {
+    font-size: 0.75rem;
+    color: var(--success-color);
+}
 
+/* 2. Área de Mensajes con Fondo CSS Sutil */
 .messages-area-v2 {
-    background: repeating-conic-gradient(var(--dark-bg) 0% 25%, var(--content-bg) 0% 50%) 50% / 20px 20px;
+    background: #121212; /* Fondo sólido oscuro y limpio */
     flex-grow: 1;
-    padding: 1.5rem;
+    padding: 1rem;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
 }
 
-/* Burbujas de Mensaje Rediseñadas */
+/* 3. Burbujas de Mensaje (Más finas y simples) */
 .message-bubble {
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    max-width: 70%;
+    max-width: 65%;
     position: relative;
 }
 .message-content {
-    padding: 0.7rem 1.1rem;
+    padding: 0.6rem 1rem; /* Menos padding */
     border-radius: 18px;
-    line-height: 1.5;
+    line-height: 1.4;
     word-wrap: break-word;
     box-shadow: 0 1px 1px rgba(0,0,0,0.2);
 }
 .message-timestamp {
-    font-size: 0.7rem;
+    font-size: 0.7rem; /* Más pequeño */
     color: var(--text-muted);
     flex-shrink: 0;
     margin-bottom: 4px;
@@ -1986,7 +1962,12 @@ button.search-result-item {
     color: white;
     border-bottom-right-radius: 4px;
 }
-.message-bubble.sent.grouped .message-content { border-radius: 18px 18px 4px 18px; }
+.message-bubble.sent.grouped .message-content {
+    border-radius: 18px 4px 4px 18px;
+}
+.message-bubble.sent:not(.grouped) .message-content {
+    border-radius: 18px 18px 4px 18px;
+}
 
 .message-bubble.received {
     align-self: flex-start;
@@ -1995,14 +1976,19 @@ button.search-result-item {
     background-color: var(--content-bg-light);
     border-bottom-left-radius: 4px;
 }
-.message-bubble.received.grouped .message-content { border-radius: 18px 18px 18px 4px; }
+.message-bubble.received.grouped .message-content {
+    border-radius: 4px 18px 18px 4px;
+}
+.message-bubble.received:not(.grouped) .message-content {
+    border-radius: 4px 18px 18px 18px;
+}
 
 /* Formulario de Entrada de Mensaje */
 .chat-input-form-v2 {
     display: flex;
     gap: 1rem;
     align-items: center;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     border-top: 1px solid var(--border-color);
     background-color: var(--content-bg);
     flex-shrink: 0;
@@ -2011,10 +1997,11 @@ button.search-result-item {
     flex-grow: 1;
     background-color: var(--content-bg-light);
     border-radius: 20px;
-    padding: 0.8rem 1.2rem;
-    max-height: 150px;
+    padding: 0.7rem 1.1rem;
+    max-height: 120px;
     overflow-y: auto;
     cursor: text;
+    line-height: 1.5;
 }
 .chat-input-editable:empty:before {
     content: attr(data-placeholder);
@@ -2023,10 +2010,21 @@ button.search-result-item {
 }
 #send-message-btn {
     border-radius: 50%;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     padding: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
+/* Scrollbar Personalizado */
+.messages-area-v2::-webkit-scrollbar, .conversations-list::-webkit-scrollbar {
+    width: 8px;
+}
+.messages-area-v2::-webkit-scrollbar-track, .conversations-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.messages-area-v2::-webkit-scrollbar-thumb, .conversations-list::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 10px;
+}
