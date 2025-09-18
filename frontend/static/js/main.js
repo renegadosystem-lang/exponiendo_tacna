@@ -1,7 +1,7 @@
-// /static/js/main.js (Versión Final con Notificaciones en Tiempo Real y Chat Preview)
+// /static/js/main.js (Versión Optimizada para Sockets)
 
-function initializeGlobalEventListeners() {
-    const token = localStorage.getItem('accessToken');
+// --- LÓGICA DE SOCKET.IO GLOBAL (SE EJECUTA UNA SOLA VEZ POR PÁGINA) ---
+const token = localStorage.getItem('accessToken');
 if (token) {
     const socket = io(backendUrl); 
 
@@ -19,27 +19,28 @@ if (token) {
         
         const notificationsPanel = document.getElementById('notifications-panel');
         if (notificationsPanel && notificationsPanel.classList.contains('visible')) {
-            // Llama a una función global para recargar notificaciones si está abierta
-            if(window.fetchNotifications) window.fetchNotifications();
+            if (window.fetchNotifications) {
+                window.fetchNotifications();
+            }
         }
     });
 }
-    // --- FIN: LÓGICA DE SOCKET.IO ---
 
+function initializeGlobalEventListeners() {
     // --- Selectores de Elementos Globales ---
     const searchBtn = document.getElementById('search-btn');
     const notificationsBtn = document.getElementById('notifications-btn');
     const chatBtn = document.getElementById('chat-btn');
-    const searchModal = document.getElementById('search-modal');
     const searchInput = document.getElementById('search-input');
     const searchResultsContainer = document.getElementById('search-results-container');
     const notificationsPanel = document.getElementById('notifications-panel');
-    const chatPreviewPanel = document.getElementById('chat-preview-panel'); // Nuevo
+    const chatPreviewPanel = document.getElementById('chat-preview-panel');
     const myProfileLink = document.getElementById('my-profile-link');
     const logoutBtn = document.getElementById('logout-btn');
 
     // --- Configuración Inicial del Header ---
-    if (token) {
+    const currentToken = localStorage.getItem('accessToken');
+    if (currentToken) {
         const username = localStorage.getItem('username');
         if (myProfileLink && username) myProfileLink.href = `/profile.html?user=${username}`;
         if (logoutBtn) {
@@ -106,6 +107,7 @@ if (token) {
             console.error("Error cargando notificaciones:", error);
         }
     };
+    window.fetchNotifications = fetchNotifications; // Hacemos la función accesible globalmente
 
     const renderNotifications = (notifications) => {
         const list = document.getElementById('notifications-list');
@@ -175,17 +177,15 @@ if (token) {
         const modalTarget = e.target.closest('[data-modal-target]');
         const closeButton = e.target.closest('.close-button');
 
-        // Abrir modales
         if (modalTarget) {
             e.preventDefault();
             const modal = document.querySelector(modalTarget.dataset.modalTarget);
             if (modal) modal.classList.add('is-visible');
         }
-        // Cerrar modales
         if (closeButton || e.target.matches('.modal.is-visible')) {
             closeAllModals();
         }
-        // Lógica para botones de notificación
+        
         const markAllReadBtn = e.target.closest('#mark-all-as-read-btn');
         const clearReadBtn = e.target.closest('#clear-read-notifications-btn');
         const deleteNotificationBtn = e.target.closest('.delete-notification-btn');
@@ -254,8 +254,7 @@ if (token) {
         }
     });
 
-    // Carga inicial de notificaciones si el usuario está logueado
-    if (token) {
+    if (currentToken) {
         fetchNotifications();
     }
 }
