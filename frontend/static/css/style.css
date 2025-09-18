@@ -1988,30 +1988,29 @@ button.search-result-item {
 
 /*
 /*
+
+/*
 =================================================================
   BLOQUE DE REDISEÑO FINAL Y DEFINITIVO PARA LA PÁGINA DE CHAT
 =================================================================
 */
 
-/* 1. Ajuste para que el chat ocupe toda la altura */
 .chat-page main {
-    padding: 0; /* Eliminamos el padding superior */
+    padding: 20px 0;
 }
 
-/* --- Contenedor Principal del Chat --- */
-.chat-container {
-    height: calc(100vh - 80px); /* Ocupa toda la altura menos el header */
-    margin-top: 0; /* Eliminamos el margen superior */
-    border: 1px solid var(--border-color);
+/* --- Contenedor Principal del Nuevo Chat --- */
+.chat-container-v2 {
+    height: calc(100vh - 120px);
     border-radius: var(--border-radius);
     background-color: var(--content-bg);
-    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
     display: flex;
     overflow: hidden;
 }
 
 /* --- Panel de Conversaciones (Izquierda) --- */
-.conversations-panel {
+.conversations-panel-v2 {
     width: 320px;
     flex-shrink: 0;
     background-color: var(--dark-bg);
@@ -2019,157 +2018,148 @@ button.search-result-item {
     display: flex;
     flex-direction: column;
 }
-.conversations-panel .panel-header {
+.conversations-panel-v2 .panel-header {
     background-color: transparent;
     border-bottom: 1px solid var(--border-color);
 }
 .conversation-search {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     position: relative;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 .conversation-search i {
     position: absolute;
-    left: 1.75rem;
+    left: 2rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
 }
 #conversation-search-input {
     background-color: var(--content-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
     border-radius: 20px;
     width: 100%;
     padding: 0.6rem 1rem 0.6rem 2.5rem;
+}
+#conversation-search-input:focus {
+    border-color: var(--primary-color);
 }
 .conversations-list {
     overflow-y: auto;
     flex-grow: 1;
 }
+.conversation-item.active {
+    background-color: var(--primary-color);
+}
+.conversation-item.active h4, .conversation-item.active .last-message {
+    color: white;
+}
 
 /* --- Panel de Chat Activo (Derecha) --- */
-.chat-panel {
+.chat-panel-v2 {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
-/* Header del Chat (El "bloque negro feo" corregido) */
-.chat-header {
+.chat-header-v2 {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     background-color: var(--content-bg);
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 10;
     padding: 0.75rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
-.chat-header h3 { font-size: 1.1rem; }
+.chat-header-v2 img {
+    width: 45px; height: 45px; border-radius: 50%; object-fit: cover;
+}
+.chat-header-v2 h3 { margin: 0; font-size: 1.1rem; }
+.chat-header-v2 .chat-partner-status { font-size: 0.8rem; color: var(--success-color); }
 
-/* 2. Área de Mensajes con Fondo CSS (Solución Creativa y Robusta) */
-.messages-area {
-    background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 70%), #121212;
+.messages-area-v2 {
+    background: repeating-conic-gradient(var(--dark-bg) 0% 25%, var(--content-bg) 0% 50%) 50% / 20px 20px;
     flex-grow: 1;
     padding: 1.5rem;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
 }
-.chat-welcome {
-    margin: auto;
-    text-align: center;
-    color: var(--text-muted);
-}
-.chat-welcome i { font-size: 4rem; }
-.chat-welcome h2 { color: var(--text-color); margin: 1rem 0 0.5rem; }
 
-/* 3. Burbujas de Mensaje Rediseñadas (Más simples y compactas) */
+/* Burbujas de Mensaje Rediseñadas */
 .message-bubble {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 70%;
     position: relative;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
-    padding: 0.6rem 1rem; /* Más pequeño */
-    border-radius: 16px; /* Ligeramente menos redondo */
+}
+.message-content {
+    padding: 0.7rem 1.1rem;
+    border-radius: 18px;
     line-height: 1.5;
-    margin-bottom: 0.25rem;
-    max-width: 65%; /* Más angosto */
     word-wrap: break-word;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+}
+.message-timestamp {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-bottom: 4px;
 }
 .message-bubble.sent {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+.message-bubble.sent .message-content {
     background-color: var(--primary-color);
     color: white;
-    align-self: flex-end;
     border-bottom-right-radius: 4px;
 }
+.message-bubble.sent.grouped .message-content { border-radius: 18px 18px 4px 18px; }
+
 .message-bubble.received {
-    background-color: var(--content-bg-light);
     align-self: flex-start;
+}
+.message-bubble.received .message-content {
+    background-color: var(--content-bg-light);
     border-bottom-left-radius: 4px;
 }
-.message-bubble + .message-bubble.sent,
-.message-bubble + .message-bubble.received {
-    margin-top: -0.5rem;
-}
-/* "Colas" de las burbujas (más pequeñas) */
-.message-bubble:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    width: 0;
-    height: 0;
-    border: 8px solid transparent; /* Más pequeño */
-}
-.message-bubble.sent:after {
-    right: -8px; /* Ajustado */
-    border-left-color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-.message-bubble.received:after {
-    left: -8px; /* Ajustado */
-    border-right-color: var(--content-bg-light);
-    border-bottom-color: var(--content-bg-light);
-}
+.message-bubble.received.grouped .message-content { border-radius: 18px 18px 18px 4px; }
 
 /* Formulario de Entrada de Mensaje */
-.chat-input-form {
-    background-color: var(--content-bg);
+.chat-input-form-v2 {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
     padding: 1rem;
     border-top: 1px solid var(--border-color);
+    background-color: var(--content-bg);
+    flex-shrink: 0;
 }
-#message-input {
+.chat-input-editable {
+    flex-grow: 1;
     background-color: var(--content-bg-light);
-    border-radius: 25px;
-    border: 1px solid var(--border-color);
+    border-radius: 20px;
     padding: 0.8rem 1.2rem;
+    max-height: 150px;
+    overflow-y: auto;
+    cursor: text;
 }
-.chat-input-form button {
+.chat-input-editable:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+#send-message-btn {
     border-radius: 50%;
     width: 48px;
     height: 48px;
     flex-shrink: 0;
     padding: 0;
     font-size: 1.1rem;
-}
-
-/* Scrollbar Personalizado */
-.messages-area::-webkit-scrollbar, .conversations-list::-webkit-scrollbar {
-    width: 8px;
-}
-.messages-area::-webkit-scrollbar-track, .conversations-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-.messages-area::-webkit-scrollbar-thumb, .conversations-list::-webkit-scrollbar-thumb {
-    background-color: #444;
-    border-radius: 10px;
-}
-
-/*
-==============================================================
-  BLOQUE DE CORRECCIÓN FINAL: ALINEACIÓN DE PANELES DE CHAT
-==============================================================
-*/
-
-.chat-container {
-    align-items: stretch; /* Asegura que ambos paneles hijos intenten tener la misma altura */
-}
-
-.conversations-panel, .chat-panel {
-    height: 100%; /* Fuerza a ambos paneles a ocupar la altura completa de su contenedor */
 }
