@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat - Exponiendo Tacna</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
@@ -32,17 +32,19 @@
         <div class="container chat-container-v3">
             <aside class="conversations-panel-v3">
                 <div class="panel-header">
-                    <h2>Chats</h2>
+                    <h2><i class="fas fa-comment-dots"></i> Chats</h2>
                     <button id="new-message-btn" class="btn btn-primary" data-modal-target="#search-modal" title="Nuevo Mensaje"><i class="fas fa-pen"></i></button>
                 </div>
-                <div id="conversations-list" class="conversations-list">
+                <div class="conversations-list" id="conversations-list">
                     </div>
             </aside>
 
             <section class="chat-panel-v3" id="chat-panel">
                  <div class="chat-header-v3" id="chat-header" style="display: none;">
+                    <button id="back-to-conversations" class="btn-back"><i class="fas fa-arrow-left"></i></button>
                     <img id="chat-partner-avatar" src="/static/img/placeholder-default.jpg" alt="Avatar">
                     <h3 id="chat-partner-username"></h3>
+                    <div class="chat-actions-menu"><i class="fas fa-ellipsis-v"></i></div>
                  </div>
                  <div class="messages-area-v3" id="messages-area">
                     <div class="chat-welcome">
@@ -52,15 +54,16 @@
                     </div>
                  </div>
                  <div class="chat-input-form-v3" id="message-form" style="display: none;">
-                    <div id="message-input" class="chat-input-editable" contenteditable="true" data-placeholder="Escribe un mensaje..."></div>
-                    <button type="submit" id="send-message-btn" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                    <button class="btn-action-input"><i class="fas fa-paperclip"></i></button>
+                    <div id="message-input" class="chat-input-editable" contenteditable="true" data-placeholder="Add a message"></div>
+                    <button type="submit" id="send-message-btn" class="btn-action-input send"><i class="fas fa-paper-plane"></i></button>
                  </div>
             </section>
         </div>
     </main>
     
-    <script src="/static/js/utils.js?v=5"></script>
-    <script src="/static/js/main.js?v=5"></script>
-    <script src="/static/js/chat.js?v=5"></script>
+    <script src="/static/js/utils.js?v=6"></script>
+    <script src="/static/js/main.js?v=6"></script>
+    <script src="/static/js/chat.js?v=6"></script>
 </body>
 </html>
