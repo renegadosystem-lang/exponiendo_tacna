@@ -1853,3 +1853,135 @@ button.search-result-item {
     top: 75px;
     right: 210px; /* <<< ¡ESTE ES EL NÚMERO QUE PUEDES CAMBIAR! */
 }
+
+/*
+=================================================================
+  BLOQUE DE REDISEÑO COMPLETO PARA LA PÁGINA DE CHAT
+=================================================================
+*/
+
+/* --- Contenedor Principal del Chat --- */
+.chat-container {
+    height: calc(100vh - 100px); /* Altura ajustada */
+    margin-top: 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--content-bg);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+}
+
+/* --- Panel de Conversaciones (Izquierda) --- */
+.conversations-panel {
+    background-color: var(--dark-bg);
+    border-right: 1px solid var(--border-color);
+}
+.conversations-panel .panel-header {
+    background-color: transparent;
+}
+
+/* NUEVO: Campo de búsqueda de conversaciones */
+.conversation-search {
+    padding: 0.5rem 1rem;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+}
+.conversation-search i {
+    position: absolute;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+#conversation-search-input {
+    background-color: var(--content-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem; /* Padding para el icono */
+}
+
+/* --- Panel de Chat Activo (Derecha) --- */
+.chat-panel {
+    background-color: #0e0e0e; /* Fondo ligeramente más oscuro */
+}
+
+/* Header del Chat (El "bloque negro feo" corregido) */
+.chat-header {
+    background-color: var(--content-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+/* Área de Mensajes con Fondo */
+.messages-area {
+    background-image: url('https://i.imgur.com/pAUA285.png'); /* Patrón sutil */
+    background-color: #0e0e0e;
+}
+.chat-welcome {
+    margin: auto;
+    text-align: center;
+    color: var(--text-muted);
+}
+.chat-welcome i { font-size: 4rem; }
+.chat-welcome h2 { color: var(--text-color); margin: 1rem 0 0.5rem; }
+
+/* Burbujas de Mensaje Rediseñadas */
+.message-bubble {
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.message-bubble.sent {
+    border-bottom-right-radius: 8px;
+}
+.message-bubble.received {
+    border-bottom-left-radius: 8px;
+}
+/* "Colas" de las burbujas */
+.message-bubble:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+}
+.message-bubble.sent:after {
+    right: -10px;
+    border-left-color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.message-bubble.received:after {
+    left: -10px;
+    border-right-color: var(--content-bg-light);
+    border-bottom-color: var(--content-bg-light);
+}
+
+/* Formulario de Entrada de Mensaje */
+.chat-input-form {
+    background-color: var(--content-bg);
+}
+#message-input {
+    background-color: var(--content-bg-light);
+    border-radius: 25px;
+    border: 1px solid var(--border-color);
+}
+.chat-input-form button {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+/* Scrollbar Personalizado */
+.messages-area::-webkit-scrollbar, .conversations-list::-webkit-scrollbar {
+    width: 8px;
+}
+.messages-area::-webkit-scrollbar-track, .conversations-list::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+.messages-area::-webkit-scrollbar-thumb, .conversations-list::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 10px;
+    border: 2px solid var(--dark-bg);
+}
