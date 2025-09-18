@@ -2159,3 +2159,17 @@ button.search-result-item {
     background-color: #444;
     border-radius: 10px;
 }
+
+/*
+==============================================================
+  BLOQUE DE CORRECCIÓN FINAL: ALINEACIÓN DE PANELES DE CHAT
+==============================================================
+*/
+
+.chat-container {
+    align-items: stretch; /* Asegura que ambos paneles hijos intenten tener la misma altura */
+}
+
+.conversations-panel, .chat-panel {
+    height: 100%; /* Fuerza a ambos paneles a ocupar la altura completa de su contenedor */
+}
