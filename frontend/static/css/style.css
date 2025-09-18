@@ -1985,3 +1985,177 @@ button.search-result-item {
     border-radius: 10px;
     border: 2px solid var(--dark-bg);
 }
+
+/*
+=================================================================
+  BLOQUE DE REDISEÑO COMPLETO PARA LA PÁGINA DE CHAT
+=================================================================
+*/
+
+.chat-page main {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* --- Contenedor Principal del Chat --- */
+.chat-container {
+    height: calc(100vh - 120px); /* Ocupa toda la altura menos header y padding */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--content-bg);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    display: flex;
+    overflow: hidden;
+}
+
+/* --- Panel de Conversaciones (Izquierda) --- */
+.conversations-panel {
+    width: 320px;
+    flex-shrink: 0;
+    background-color: var(--dark-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+.conversations-panel .panel-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+}
+.conversation-search {
+    padding: 0.5rem 1rem;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+}
+.conversation-search i {
+    position: absolute;
+    left: 1.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+#conversation-search-input {
+    background-color: var(--content-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+}
+.conversations-list {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* --- Panel de Chat Activo (Derecha) --- */
+.chat-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #0e0e0e;
+}
+.chat-header {
+    background-color: var(--content-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.chat-header h3 { font-size: 1.1rem; }
+
+/* Área de Mensajes con Fondo */
+.messages-area {
+    background-image: url('https://i.ibb.co/6n2R0jM/dark-pattern.png'); /* URL de fondo corregida y estable */
+    background-color: #0e0e0e;
+    flex-grow: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.chat-welcome {
+    margin: auto;
+    text-align: center;
+    color: var(--text-muted);
+}
+.chat-welcome i { font-size: 4rem; }
+.chat-welcome h2 { color: var(--text-color); margin: 1rem 0 0.5rem; }
+
+/* Burbujas de Mensaje Rediseñadas */
+.message-bubble {
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    padding: 0.75rem 1.25rem;
+    border-radius: 18px;
+    line-height: 1.5;
+    margin-bottom: 0.25rem; /* Menos espacio entre burbujas */
+    max-width: 70%;
+    word-wrap: break-word; /* Para que el texto largo se ajuste */
+}
+.message-bubble.sent {
+    background-color: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+.message-bubble.received {
+    background-color: var(--content-bg-light);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+/* Agrupar mensajes del mismo emisor */
+.message-bubble.sent + .message-bubble.sent,
+.message-bubble.received + .message-bubble.received {
+    margin-top: -0.5rem; /* Juntar burbujas consecutivas */
+}
+
+/* "Colas" de las burbujas */
+.message-bubble:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+}
+.message-bubble.sent:after {
+    right: -10px;
+    border-left-color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.message-bubble.received:after {
+    left: -10px;
+    border-right-color: var(--content-bg-light);
+    border-bottom-color: var(--content-bg-light);
+}
+
+/* Formulario de Entrada de Mensaje */
+.chat-input-form {
+    background-color: var(--content-bg);
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+#message-input {
+    background-color: var(--content-bg-light);
+    border-radius: 25px;
+    border: 1px solid var(--border-color);
+    padding: 0.8rem 1.2rem;
+}
+.chat-input-form button {
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    padding: 0;
+    font-size: 1.1rem;
+}
+
+/* Scrollbar Personalizado */
+.messages-area::-webkit-scrollbar, .conversations-list::-webkit-scrollbar {
+    width: 8px;
+}
+.messages-area::-webkit-scrollbar-track, .conversations-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.messages-area::-webkit-scrollbar-thumb, .conversations-list::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 10px;
+}
