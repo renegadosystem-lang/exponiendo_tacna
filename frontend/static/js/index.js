@@ -1,10 +1,15 @@
-// /static/js/index.js (Versión con guardado de avatar en login)
+// /static/js/index.js (Lógica para la página de inicio)
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Redirigir si ya hay sesión.
+    // Si el usuario ya tiene sesión, lo redirigimos directamente al dashboard.
     if (localStorage.getItem('accessToken')) {
         window.location.href = '/dashboard.html';
-        return;
+        return; 
+    }
+
+    // Activamos los listeners globales de main.js para los modales
+    if (window.initializeGlobalEventListeners) {
+        window.initializeGlobalEventListeners();
     }
 
     setupForms();
@@ -36,14 +41,11 @@ function setupForms() {
                 return response.json(); 
             })
             .then(data => { 
-                // --- INICIO DE LA CORRECCIÓN ---
                 localStorage.setItem('accessToken', data.access_token); 
                 localStorage.setItem('username', data.username);
-                // Guardamos la nueva URL de la foto de perfil
                 if (data.profile_picture_url) {
                     localStorage.setItem('profile_picture_url', data.profile_picture_url);
                 }
-                // --- FIN DE LA CORRECCIÓN ---
                 window.location.href = '/dashboard.html'; 
             })
             .catch(error => { 
@@ -54,11 +56,9 @@ function setupForms() {
     }
 
     if (registerForm) {
-        // ... (la lógica del formulario de registro no cambia)
         const messageDiv = document.getElementById('register-message');
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            messageDiv.style.display = 'none';
             const username = e.target.username.value;
             const email = e.target.email.value;
             const password = e.target.password.value;
@@ -78,7 +78,6 @@ function setupForms() {
                 } 
             })
             .catch(error => { 
-                console.error('Error en el registro:', error); 
                 showMessage(messageDiv, 'No se pudo conectar con el servidor.', 'error'); 
             });
         });
@@ -86,14 +85,10 @@ function setupForms() {
 }
 
 function loadMostViewedAlbums() {
-    // ... (esta función no cambia)
     const gridContainer = document.getElementById('album-grid-container');
     const apiUrl = `${window.backendUrl}/api/albums?sort_by=views_count&sort_order=desc&per_page=6`;
     fetch(apiUrl)
-        .then(response => { 
-            if (!response.ok) throw new Error('Error de red'); 
-            return response.json(); 
-        })
+        .then(response => response.ok ? response.json() : Promise.reject('Error de red'))
         .then(data => {
             gridContainer.innerHTML = '';
             if (data.albums && data.albums.length > 0) {
@@ -103,7 +98,6 @@ function loadMostViewedAlbums() {
                     const albumCard = document.createElement('div');
                     albumCard.className = 'album-card';
                     albumCard.style.cursor = 'pointer';
-                    albumCard.dataset.albumId = album.id;
                     albumCard.innerHTML = `
                         <div class="album-card-thumbnail" style="background-image: url('${thumbnailUrl}');"></div>
                         <div class="album-info">
@@ -117,20 +111,18 @@ function loadMostViewedAlbums() {
                 gridContainer.innerHTML = '<p>Aún no hay álbumes para mostrar.</p>'; 
             }
         }).catch(error => { 
-            console.error('Error al cargar álbumes:', error); 
             gridContainer.innerHTML = '<p>No se pudieron cargar los álbumes.</p>'; 
         });
 }
 
 function setupGuestAlbumClickListener() {
-    // ... (esta función no cambia)
     const gridContainer = document.getElementById('album-grid-container');
     gridContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.album-card');
         if (card && !e.target.closest('a')) {
             e.preventDefault();
             e.stopPropagation();
-            showAlert('Acceso Restringido', 'Para ver el contenido completo, por favor crea una cuenta o inicia sesión.');
+            showAlert('Acceso Restringido', 'Para ver el contenido, crea una cuenta o inicia sesión.');
         }
     });
 }
@@ -139,7 +131,6 @@ function showError(element, message) {
     element.textContent = message; 
     element.style.display = 'block'; 
 }
-
 function showMessage(element, message, type) { 
     element.textContent = message; 
     element.className = type === 'success' ? 'success-message' : 'error-message'; 
