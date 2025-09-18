@@ -1987,19 +1987,21 @@ button.search-result-item {
 }
 
 /*
+/*
 =================================================================
-  BLOQUE DE REDISEÑO COMPLETO PARA LA PÁGINA DE CHAT
+  BLOQUE DE REDISEÑO FINAL Y DEFINITIVO PARA LA PÁGINA DE CHAT
 =================================================================
 */
 
+/* 1. Ajuste para que el chat ocupe toda la altura */
 .chat-page main {
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding: 0; /* Eliminamos el padding superior */
 }
 
 /* --- Contenedor Principal del Chat --- */
 .chat-container {
-    height: calc(100vh - 120px); /* Ocupa toda la altura menos header y padding */
+    height: calc(100vh - 80px); /* Ocupa toda la altura menos el header */
+    margin-top: 0; /* Eliminamos el margen superior */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     background-color: var(--content-bg);
@@ -2050,8 +2052,9 @@ button.search-result-item {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    background-color: #0e0e0e;
 }
+
+/* Header del Chat (El "bloque negro feo" corregido) */
 .chat-header {
     background-color: var(--content-bg);
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -2061,10 +2064,9 @@ button.search-result-item {
 }
 .chat-header h3 { font-size: 1.1rem; }
 
-/* Área de Mensajes con Fondo */
+/* 2. Área de Mensajes con Fondo CSS (Solución Creativa y Robusta) */
 .messages-area {
-    background-image: url('https://i.ibb.co/6n2R0jM/dark-pattern.png'); /* URL de fondo corregida y estable */
-    background-color: #0e0e0e;
+    background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 70%), #121212;
     flex-grow: 1;
     padding: 1.5rem;
     overflow-y: auto;
@@ -2079,16 +2081,16 @@ button.search-result-item {
 .chat-welcome i { font-size: 4rem; }
 .chat-welcome h2 { color: var(--text-color); margin: 1rem 0 0.5rem; }
 
-/* Burbujas de Mensaje Rediseñadas */
+/* 3. Burbujas de Mensaje Rediseñadas (Más simples y compactas) */
 .message-bubble {
     position: relative;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    padding: 0.75rem 1.25rem;
-    border-radius: 18px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+    padding: 0.6rem 1rem; /* Más pequeño */
+    border-radius: 16px; /* Ligeramente menos redondo */
     line-height: 1.5;
-    margin-bottom: 0.25rem; /* Menos espacio entre burbujas */
-    max-width: 70%;
-    word-wrap: break-word; /* Para que el texto largo se ajuste */
+    margin-bottom: 0.25rem;
+    max-width: 65%; /* Más angosto */
+    word-wrap: break-word;
 }
 .message-bubble.sent {
     background-color: var(--primary-color);
@@ -2101,28 +2103,26 @@ button.search-result-item {
     align-self: flex-start;
     border-bottom-left-radius: 4px;
 }
-/* Agrupar mensajes del mismo emisor */
-.message-bubble.sent + .message-bubble.sent,
-.message-bubble.received + .message-bubble.received {
-    margin-top: -0.5rem; /* Juntar burbujas consecutivas */
+.message-bubble + .message-bubble.sent,
+.message-bubble + .message-bubble.received {
+    margin-top: -0.5rem;
 }
-
-/* "Colas" de las burbujas */
+/* "Colas" de las burbujas (más pequeñas) */
 .message-bubble:after {
     content: '';
     position: absolute;
     bottom: 0;
     width: 0;
     height: 0;
-    border: 10px solid transparent;
+    border: 8px solid transparent; /* Más pequeño */
 }
 .message-bubble.sent:after {
-    right: -10px;
+    right: -8px; /* Ajustado */
     border-left-color: var(--primary-color);
     border-bottom-color: var(--primary-color);
 }
 .message-bubble.received:after {
-    left: -10px;
+    left: -8px; /* Ajustado */
     border-right-color: var(--content-bg-light);
     border-bottom-color: var(--content-bg-light);
 }
