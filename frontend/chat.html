@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat - Exponiendo Tacna</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/css/style.css?v=3">
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
@@ -34,43 +34,49 @@
     </header>
 
     <main>
-        <div class="container chat-container">
-            <aside class="conversations-panel">
+        <div class="container chat-container-v2">
+            <aside class="conversations-panel-v2">
                 <div class="panel-header">
                     <h2>Chats</h2>
-                    <button id="new-message-btn" class="btn btn-primary" data-modal-target="#search-modal" title="Nuevo Mensaje">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    <button id="new-message-btn" class="btn btn-primary" data-modal-target="#search-modal" title="Nuevo Mensaje"><i class="fas fa-edit"></i></button>
                 </div>
                 <div class="conversation-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="conversation-search-input" placeholder="Buscar o empezar un chat...">
+                    <input type="text" id="conversation-search-input" placeholder="Buscar...">
                 </div>
                 <div class="conversations-list" id="conversations-list">
                     </div>
             </aside>
-            <section class="chat-panel" id="chat-panel">
-                 <div class="chat-header" id="chat-header" style="display: none;">
+
+            <section class="chat-panel-v2" id="chat-panel">
+                 <div class="chat-header-v2" id="chat-header" style="display: none;">
                     <img id="chat-partner-avatar" src="/static/img/placeholder-default.jpg" alt="Avatar">
-                    <h3 id="chat-partner-username"></h3>
+                    <div class="chat-header-info">
+                        <h3 id="chat-partner-username"></h3>
+                        <span class="chat-partner-status">en línea</span>
+                    </div>
                  </div>
-                 <div class="messages-area" id="messages-area">
+                 <div class="messages-area-v2" id="messages-area">
                     <div class="chat-welcome">
                         <i class="fas fa-comments"></i>
                         <h2>Tus Mensajes</h2>
                         <p>Selecciona una conversación para empezar a chatear.</p>
                     </div>
                  </div>
-                 <form class="chat-input-form" id="message-form" style="display: none;">
-                    <input type="text" id="message-input" placeholder="Escribe un mensaje..." autocomplete="off">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
-                 </form>
+                 <div class="chat-input-form-v2" id="message-form" style="display: none;">
+                    <div id="message-input" class="chat-input-editable" contenteditable="true" data-placeholder="Escribe un mensaje..."></div>
+                    <button type="submit" id="send-message-btn" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                 </div>
             </section>
         </div>
     </main>
     
-    <script src="/static/js/utils.js?v=3"></script>
-    <script src="/static/js/main.js?v=3"></script>
-    <script src="/static/js/chat.js?v=3"></script>
+    <div id="toast-container"></div>
+    <div id="search-modal" class="modal"></div>
+    <div id="notifications-panel"></div>
+    <div id="chat-preview-panel"></div>
+    <script src="/static/js/utils.js?v=4"></script>
+    <script src="/static/js/main.js?v=4"></script>
+    <script src="/static/js/chat.js?v=4"></script>
 </body>
 </html>
