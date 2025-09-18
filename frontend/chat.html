@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat - Exponiendo Tacna</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
@@ -14,7 +14,7 @@
     <header class="main-header">
         <div class="container">
             <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
-             <nav class="main-nav">
+            <nav class="main-nav">
                 <button class="nav-icon-btn" id="search-btn" data-modal-target="#search-modal" title="Buscar"><i class="fas fa-search"></i></button>
                 <div class="nav-icon-wrapper">
                     <button class="nav-icon-btn" id="notifications-btn" title="Notificaciones"><i class="fas fa-bell"></i><span class="notification-badge"></span></button>
@@ -56,80 +56,15 @@
     </main>
     
     <div id="toast-container"></div>
-
-    <div id="confirm-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="confirm-title">Confirmar Acción</h2>
-            <p id="confirm-message">¿Estás seguro?</p>
-            <div class="confirm-buttons">
-                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button>
-                <button id="confirm-ok-btn" class="btn btn-primary">Aceptar</button>
-            </div>
-        </div>
-    </div>
-      
-    <div id="alert-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="alert-title">Aviso</h2>
-            <p id="alert-message"></p>
-            <button id="alert-ok-btn" class="btn btn-primary">Aceptar</button>
-        </div>
-    </div>
+    <div id="confirm-modal" class="modal"></div>
+    <div id="alert-modal" class="modal"></div>
+    <div id="search-modal" class="modal"></div>
+    <div id="notifications-panel"></div>
+    <div id="chat-preview-panel"></div>
+    <div id="report-comment-modal" class="modal"></div>
     
-    <div id="search-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-button">&times;</button>
-            <h2>Buscar Usuarios o Álbumes</h2>
-            <div class="form-group">
-                <input type="text" id="search-input" placeholder="Escribe para buscar..." autocomplete="off">
-            </div>
-            <div id="search-results-container"></div>
-        </div>
-    </div>
-
-    <div id="notifications-panel">
-        <div class="panel-header">
-            <h3>Notificaciones</h3>
-        </div>
-        <div id="notifications-list"></div>
-        <div class="panel-footer">
-            <button id="mark-all-as-read-btn">Marcar todo como leído</button>
-            <button id="clear-read-notifications-btn">Limpiar Leídas</button>
-        </div>
-    </div>
-    
-    <div id="chat-preview-panel">
-        <div class="panel-header">
-            <h3>Mensajes</h3>
-        </div>
-        <div id="chat-preview-list"></div>
-        <div class="panel-footer">
-            <a href="/chat.html" class="btn btn-primary" style="width: 100%;">Ver todos los chats</a>
-        </div>
-    </div>
-
-    <div id="report-comment-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-button">&times;</button>
-            <h2>Reportar Comentario</h2>
-            <form id="report-comment-form">
-                <div class="form-group">
-                    <label for="report-comment-reason">Razón del Reporte:</label>
-                    <select id="report-comment-reason" name="reason" required>
-                        <option value="">Selecciona una razón</option>
-                        <option value="acoso">Acoso o bullying</option>
-                        <option value="spam">Spam o publicidad no deseada</option>
-                        <option value="contenido inapropiado">Contenido sensible o inapropiado</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Enviar Reporte</button>
-            </form>
-        </div>
-    </div>
-    
-    <script src="/static/js/utils.js?v=7"></script>
-    <script src="/static/js/main.js?v=7"></script>
-    <script src="/static/js/chat.js?v=7"></script>
+    <script src="/static/js/utils.js?v=8"></script>
+    <script src="/static/js/main.js?v=8"></script>
+    <script src="/static/js/chat.js?v=8"></script>
 </body>
 </html>
