@@ -1854,144 +1854,123 @@ button.search-result-item {
     right: 210px; /* <<< ¡ESTE ES EL NÚMERO QUE PUEDES CAMBIAR! */
 }
 
-
-/*
 /*
 =================================================================
-  BLOQUE DE REDISEÑO FINAL v2 PARA LA PÁGINA DE CHAT
+  BLOQUE DE REDISEÑO MINIMALISTA Y ELEGANTE PARA EL CHAT
 =================================================================
 */
+.chat-page main { padding: 0; }
 
-.chat-page main {
-    padding: 20px 0;
-}
-
-/* --- Contenedor Principal del Nuevo Chat --- */
-.chat-container-v2 {
-    height: calc(100vh - 120px);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--content-bg);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    display: flex;
-    overflow: hidden;
+.chat-container-v3 {
+    height: calc(100vh - 60px); /* Altura total menos el header */
+    background-color: var(--dark-bg);
 }
 
 /* --- Panel de Conversaciones (Izquierda) --- */
-.conversations-panel-v2 {
+.conversations-panel-v3 {
     width: 320px;
     flex-shrink: 0;
-    background-color: var(--dark-bg);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
 }
-
-/* --- Panel de Chat Activo (Derecha) --- */
-.chat-panel-v2 {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+.conversations-panel-v3 .panel-header {
+    border-bottom: 1px solid var(--border-color);
 }
-
-/* 1. Header del Chat (Más compacto y elegante) */
-.chat-header-v2 {
+.conversations-panel-v3 .panel-header #new-message-btn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.2rem;
+}
+.no-conversations {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+.conversation-item-v3 {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background-color: var(--content-bg);
-    z-index: 10;
-    padding: 0.5rem 1.25rem; /* Menos padding vertical */
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
     border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
+    transition: background-color 0.2s ease;
 }
-.chat-header-v2 img {
-    width: 36px; /* Más pequeño */
-    height: 36px;
+.conversation-item-v3:hover {
+    background-color: var(--content-bg);
+}
+.conversation-item-v3.active {
+    background-color: var(--primary-color);
+}
+.conversation-item-v3 img {
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
 }
-.chat-header-v2 h3 {
-    margin: 0;
-    font-size: 1rem; /* Más pequeño */
-    font-weight: 600;
-}
-.chat-header-v2 .chat-partner-status {
-    font-size: 0.75rem;
-    color: var(--success-color);
-}
+.conversation-item-v3 h4 { color: var(--text-color); margin: 0; font-size: 1rem; }
+.conversation-item-v3 p { color: var(--text-muted); margin: 0; font-size: 0.9rem; }
+.conversation-item-v3.active h4, .conversation-item-v3.active p { color: white; }
 
-/* 2. Área de Mensajes con Fondo CSS Sutil */
-.messages-area-v2 {
-    background: #121212; /* Fondo sólido oscuro y limpio */
+/* --- Panel de Chat Activo (Derecha) --- */
+.chat-panel-v3 {
     flex-grow: 1;
-    padding: 1rem;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
 }
-
-/* 3. Burbujas de Mensaje (Más finas y simples) */
-.message-bubble {
+.chat-header-v3 {
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    max-width: 65%;
-    position: relative;
-}
-.message-content {
-    padding: 0.6rem 1rem; /* Menos padding */
-    border-radius: 18px;
-    line-height: 1.4;
-    word-wrap: break-word;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
-}
-.message-timestamp {
-    font-size: 0.7rem; /* Más pequeño */
-    color: var(--text-muted);
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
-    margin-bottom: 4px;
 }
-.message-bubble.sent {
-    align-self: flex-end;
-    flex-direction: row-reverse;
+.chat-header-v3 img {
+    width: 40px; height: 40px; border-radius: 50%;
 }
-.message-bubble.sent .message-content {
-    background-color: var(--primary-color);
-    color: white;
-    border-bottom-right-radius: 4px;
-}
-.message-bubble.sent.grouped .message-content {
-    border-radius: 18px 4px 4px 18px;
-}
-.message-bubble.sent:not(.grouped) .message-content {
-    border-radius: 18px 18px 4px 18px;
+.chat-header-v3 h3 {
+    margin: 0; font-size: 1.1rem;
 }
 
-.message-bubble.received {
-    align-self: flex-start;
+.messages-area-v3 {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem 2rem;
 }
-.message-bubble.received .message-content {
-    background-color: var(--content-bg-light);
-    border-bottom-left-radius: 4px;
+.message-row {
+    display: flex;
+    padding: 0.5rem 0;
 }
-.message-bubble.received.grouped .message-content {
-    border-radius: 4px 18px 18px 4px;
+.message-row.sent {
+    justify-content: flex-end;
 }
-.message-bubble.received:not(.grouped) .message-content {
-    border-radius: 4px 18px 18px 18px;
+.message-row.received {
+    justify-content: flex-start;
+}
+.message-text {
+    /* Sin burbuja, texto directo sobre el fondo */
+    padding: 0.6rem 0;
+    line-height: 1.5;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+.message-row.sent .message-text {
+    color: var(--primary-hover);
+}
+.message-row.received .message-text {
+    color: var(--text-color);
 }
 
-/* Formulario de Entrada de Mensaje */
-.chat-input-form-v2 {
+.chat-input-form-v3 {
     display: flex;
     gap: 1rem;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     border-top: 1px solid var(--border-color);
     background-color: var(--content-bg);
-    flex-shrink: 0;
 }
 .chat-input-editable {
     flex-grow: 1;
@@ -2015,16 +1994,4 @@ button.search-result-item {
     flex-shrink: 0;
     padding: 0;
     font-size: 1rem;
-}
-
-/* Scrollbar Personalizado */
-.messages-area-v2::-webkit-scrollbar, .conversations-list::-webkit-scrollbar {
-    width: 8px;
-}
-.messages-area-v2::-webkit-scrollbar-track, .conversations-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-.messages-area-v2::-webkit-scrollbar-thumb, .conversations-list::-webkit-scrollbar-thumb {
-    background-color: #444;
-    border-radius: 10px;
 }
