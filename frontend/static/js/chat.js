@@ -1,4 +1,4 @@
-// /static/js/chat.js (Versión para Navegación de 2 Vistas)
+// /static/js/chat.js (Versión Final Verificada y Robusta)
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('accessToken');
@@ -24,69 +24,163 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         currentUserId = parseInt(JSON.parse(atob(token.split('.')[1])).sub, 10);
     } catch (e) {
+        // Si el token está malformado, redirigir al inicio.
         window.location.href = '/index.html';
+        return;
+    }
+
+    // Asegurarnos de que los elementos principales existan antes de continuar.
+    if (!conversationsView || !messagesView || !conversationsList) {
+        console.error('Error crítico: La estructura HTML del chat no está completa.');
         return;
     }
 
     const socket = io(window.backendUrl);
     socket.on('connect', () => socket.emit('authenticate', { token }));
     socket.on('new_message', (message) => {
-        if (message.sender_id === activeChatUserId) {
-            appendMessage(message);
-        }
+        if (message.sender_id === activeChatUserId) appendMessage(message);
         loadConversations();
     });
 
-    // --- Lógica de Navegación entre Vistas ---
     const showView = (viewName) => {
-        conversationsView.classList.remove('active');
-        messagesView.classList.remove('active');
         if (viewName === 'messages') {
+            conversationsView.classList.remove('active');
             messagesView.classList.add('active');
         } else {
+            messagesView.classList.remove('active');
             conversationsView.classList.add('active');
         }
     };
 
-    const loadConversations = async () => { /* ... (igual que antes) ... */ };
+    const loadConversations = async () => {
+        try {
+            const response = await fetchWithAuth('/api/chats');
+            if (!response.ok) throw new Error('No se pudieron cargar las conversaciones.');
+            allConversations = await response.json();
+            renderConversations(allConversations);
+        } catch (error) {
+            console.error('Error cargando conversaciones:', error);
+            conversationsList.innerHTML = '<p class="no-conversations">Error al cargar chats</p>';
+        }
+    };
     
     const loadMessages = async (otherUser) => {
         activeChatUserId = otherUser.id;
-        showView('messages'); // <-- Cambia a la vista de mensajes
+        showView('messages');
+        messagesArea.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
         
-        // ... (resto de la lógica de carga de mensajes es igual) ...
+        chatPartnerAvatar.src = otherUser.profile_picture_url || '/static/img/placeholder-default.jpg';
+        chatPartnerUsername.textContent = otherUser.username;
+        chatHeader.style.display = 'flex';
+        messageForm.style.display = 'flex';
+        
+        document.querySelectorAll('.conversation-item-v3.active').forEach(el => el.classList.remove('active'));
+        const partnerEl = document.querySelector(`.conversation-item-v3[data-user-id="${otherUser.id}"]`);
+        if (partnerEl) partnerEl.classList.add('active');
+
+        const response = await fetchWithAuth(`/api/chats/${otherUser.id}`);
+        const messages = await response.json();
+        renderMessages(messages);
     };
     
-    const renderConversations = (conversations) => { /* ... (igual que antes) ... */ };
-    const renderMessages = (messages) => { /* ... (igual que antes) ... */ };
-    const appendMessage = (message) => { /* ... (igual que antes) ... */ };
-    const createMessageBubble = (msg, isGrouped) => { /* ... (igual que antes) ... */ };
-    const scrollToBottom = () => { /* ... (igual que antes) ... */ };
-    const sendMessage = () => { /* ... (igual que antes) ... */ };
+    const renderConversations = (conversations) => {
+        if (conversations.length === 0) {
+            conversationsList.innerHTML = '<p class="no-conversations">Inicia un nuevo chat</p>';
+            return;
+        }
+        conversationsList.innerHTML = conversations.map(convo => {
+            const lastMsg = convo.last_message;
+            const lastMessageText = lastMsg.sender_id === currentUserId ? 'Tú: ' : '';
+            return `
+            <div class="conversation-item-v3 ${convo.other_user.id === activeChatUserId ? 'active' : ''}" data-user-id="${convo.other_user.id}">
+                <img src="${convo.other_user.profile_picture_url || '/static/img/placeholder-default.jpg'}" alt="${convo.other_user.username}">
+                <div class="conversation-info">
+                    <h4>${convo.other_user.username}</h4>
+                    <p class="last-message">${lastMessageText}${lastMsg.content}</p>
+                </div>
+                ${convo.unread_count > 0 ? `<span class="unread-badge">${convo.unread_count}</span>` : ''}
+            </div>`;
+        }).join('');
+    };
+
+    const renderMessages = (messages) => {
+        messagesArea.innerHTML = '';
+        let lastSenderId = null;
+        messages.forEach(msg => {
+            const showHeader = msg.sender_id !== lastSenderId;
+            appendMessage(msg, showHeader);
+            lastSenderId = msg.sender_id;
+        });
+        scrollToBottom();
+    };
+    
+    const appendMessage = (message, showHeader = true) => {
+        const welcome = messagesArea.querySelector('.chat-welcome');
+        if (welcome) welcome.remove();
+        
+        const isSent = message.sender_id === currentUserId;
+        const sender = isSent ? null : allConversations.find(c => c.other_user.id === message.sender_id)?.other_user;
+        const senderName = isSent ? 'Tú' : (sender?.username || 'Usuario');
+        const senderAvatar = isSent ? '' : (sender?.profile_picture_url || '/static/img/placeholder-default.jpg');
+
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.dataset.senderId == message.sender_id) {
+            showHeader = false;
+        }
+
+        const messageEl = document.createElement('div');
+        messageEl.classList.add('message-group');
+        if (!showHeader) messageEl.classList.add('compact');
+        messageEl.dataset.senderId = message.sender_id;
+
+        if (showHeader) {
+            messageEl.innerHTML = `
+                <img src="${senderAvatar}" alt="avatar" class="message-avatar">
+                <div class="message-body">
+                    <div class="message-sender">${senderName}</div>
+                    <div class="message-text">${message.content}</div>
+                </div>`;
+        } else {
+            messageEl.innerHTML = `<div class="message-body compact-body"><div class="message-text">${message.content}</div></div>`;
+        }
+        messagesArea.appendChild(messageEl);
+        scrollToBottom();
+    };
+
+    const scrollToBottom = () => { messagesArea.scrollTop = messagesArea.scrollHeight; };
+    
+    const sendMessage = () => {
+        const content = messageInput.innerText.trim();
+        if (content && activeChatUserId) {
+            socket.emit('private_message', { token, recipient_id: activeChatUserId, content });
+            appendMessage({ sender_id: currentUserId, content, created_at: new Date().toISOString() });
+            messageInput.innerHTML = '';
+            messageInput.focus();
+        }
+    };
 
     // --- Event Listeners ---
-    sendMessageBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
+    if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
+    if (messageInput) messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     });
     
-    conversationsList.addEventListener('click', (e) => {
+    if (conversationsList) conversationsList.addEventListener('click', (e) => {
         const target = e.target.closest('.conversation-item-v3');
         if (target) {
             const userId = parseInt(target.dataset.userId, 10);
             const convo = allConversations.find(c => c.other_user.id === userId);
             if(convo) {
-                // Actualiza la URL para poder recargar la página en un chat
                 history.pushState(null, '', `/chat.html?with=${convo.other_user.id}`);
                 loadMessages(convo.other_user);
             }
         }
     });
 
-    backToConversationsBtn.addEventListener('click', () => {
+    if (backToConversationsBtn) backToConversationsBtn.addEventListener('click', () => {
         activeChatUserId = null;
         history.pushState(null, '', '/chat.html');
         showView('conversations');
@@ -94,35 +188,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('startChat', (e) => loadMessages(e.detail));
 
-    // --- Inicialización ---
-    const checkUrlForChat = () => {
+    const checkUrl = () => {
         const params = new URLSearchParams(window.location.search);
         const userId = params.get('with');
         if (userId) {
-            // Necesitamos los datos del usuario. La forma más robusta es buscarlos en la lista de conversaciones.
-            // Si la lista no ha cargado, esperamos un poco.
             const findUserAndLoad = () => {
                 const convo = allConversations.find(c => c.other_user.id == userId);
                 if (convo) {
                     loadMessages(convo.other_user);
                 } else {
-                    // Si vienes de un "deep link" (ej. desde un perfil), la conversación puede no existir aún
-                    // Aquí se necesitaría una llamada a /api/profiles/<username> para obtener los datos.
-                    // Por ahora, lo dejamos simple y solo funciona para chats existentes.
+                    showView('conversations'); // Si no se encuentra el chat, mostrar la lista
                 }
             };
 
-            if (allConversations.length > 0) {
-                findUserAndLoad();
-            } else {
-                setTimeout(findUserAndLoad, 500); // Esperar a que carguen las conversaciones
-            }
+            if (allConversations.length > 0) findUserAndLoad();
+            else setTimeout(findUserAndLoad, 500);
         } else {
             showView('conversations');
         }
     };
-
-    loadConversations().then(() => {
-        checkUrlForChat();
-    });
+    
+    loadConversations().then(() => checkUrl());
 });
