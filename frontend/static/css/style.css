@@ -1833,3 +1833,23 @@ button.search-result-item {
 #chat-preview-panel .panel-footer {
     text-align: center;
 }
+/*
+=================================================================
+  ESTILOS AISLADOS EXCLUSIVAMENTE PARA LA PÁGINA DEL DASHBOARD
+=================================================================
+*/
+
+/* Usamos .dashboard-page para asegurarnos de que estas reglas
+   solo afecten a la página del dashboard y a ninguna otra. */
+
+.dashboard-page #notifications-panel {
+    position: fixed;
+    top: 75px;
+    right: 255px; /* <<< ¡ESTE ES EL NÚMERO QUE PUEDES CAMBIAR! */
+}
+
+.dashboard-page #chat-preview-panel {
+    position: fixed;
+    top: 75px;
+    right: 210px; /* <<< ¡ESTE ES EL NÚMERO QUE PUEDES CAMBIAR! */
+}
