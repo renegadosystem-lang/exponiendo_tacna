@@ -130,17 +130,10 @@ function formatTimeAgo(dateString) {
     const minutes = Math.round(seconds / 60);
     const hours = Math.round(minutes / 60);
     const days = Math.round(hours / 24);
-    const weeks = Math.round(days / 7);
-    const months = Math.round(days / 30);
-    const years = Math.round(days / 365);
 
-    if (seconds < 60) return `hace ${seconds} seg`;
+    if (seconds < 60) return `hace instantes`;
     if (minutes < 60) return `hace ${minutes} min`;
     if (hours < 24) return `hace ${hours} h`;
-    if (days < 7) return `hace ${days} d`;
-    if (weeks < 5) return `hace ${weeks} sem`;
-    if (months < 12) return `hace ${months} meses`;
-    return `hace ${years} años`;
-}
-
+    return `hace ${days} d`;
+}       
 }
