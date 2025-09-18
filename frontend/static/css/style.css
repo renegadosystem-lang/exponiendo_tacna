@@ -1983,4 +1983,33 @@ button.search-result-item {
 /* Cuando un chat está activo, el resto se atenúa ligeramente */
 .conversations-list:has(.active) .conversation-item-v3:not(.active) {
     opacity: 0.6;
+
+}
+
+/*
+=================================================================
+  CORRECCIÓN FINAL DE Z-INDEX (Añadir al final de style.css)
+=================================================================
+*/
+
+/* Damos una prioridad altísima a los paneles para que floten sobre todo */
+#notifications-panel,
+#chat-preview-panel {
+    z-index: 9997;
+}
+
+/* Los modales deben ir encima de los paneles */
+.modal {
+    z-index: 9998;
+}
+
+/* Las alertas y confirmaciones deben ser lo más importante */
+#confirm-modal,
+#alert-modal {
+    z-index: 9999;
+}
+
+/* Y el contenedor de toasts, por encima de todo */
+#toast-container {
+    z-index: 10000;
 }
