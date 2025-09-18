@@ -1,9 +1,10 @@
-// /static/js/main.js (Versión Optimizada para Sockets)
+// /static/js/main.js (Versión Final y Definitiva)
 
 // --- LÓGICA DE SOCKET.IO GLOBAL (SE EJECUTA UNA SOLA VEZ POR PÁGINA) ---
 const token = localStorage.getItem('accessToken');
 if (token) {
-    const socket = io(backendUrl); 
+    // Usamos window.backendUrl que es la variable global definida en utils.js
+    const socket = io(window.backendUrl); 
 
     socket.on('connect', () => {
         console.log('Socket conectado globalmente.');
@@ -19,6 +20,7 @@ if (token) {
         
         const notificationsPanel = document.getElementById('notifications-panel');
         if (notificationsPanel && notificationsPanel.classList.contains('visible')) {
+            // Llama a una función global para recargar notificaciones si el panel está abierto
             if (window.fetchNotifications) {
                 window.fetchNotifications();
             }
@@ -95,8 +97,8 @@ function initializeGlobalEventListeners() {
             const notifications = await response.json();
             renderNotifications(notifications);
             
-            const unreadCount = notifications.filter(n => !n.is_read).length;
             if (notificationsBtn) {
+                const unreadCount = notifications.filter(n => !n.is_read).length;
                 if (unreadCount > 0) {
                     notificationsBtn.classList.add('has-unread');
                 } else {
@@ -138,7 +140,7 @@ function initializeGlobalEventListeners() {
         `).join('');
     };
     
-    // --- NUEVA LÓGICA PARA VISTA PREVIA DE CHAT ---
+    // --- Lógica de Vista Previa de Chat ---
     const fetchChatPreview = async () => {
         const list = document.getElementById('chat-preview-list');
         if(!list) return;
@@ -208,7 +210,7 @@ function initializeGlobalEventListeners() {
                 fetchNotifications();
             }, 300);
         }
-        // Lógica para el botón de chat
+
         const chatButton = e.target.closest('.start-chat');
         if (chatButton) {
             const userInfo = JSON.parse(chatButton.dataset.userInfo);
