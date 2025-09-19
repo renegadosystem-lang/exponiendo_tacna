@@ -3,7 +3,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- INICIALIZACIÓN GLOBAL ---
     // Le decimos al motor principal que se active en esta página.
-    window.initializeGlobalEventListeners();
     const token = localStorage.getItem('accessToken');
     if (!token) { window.location.href = '/index.html'; return; }
 
@@ -237,4 +236,5 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     loadConversations().then(() => checkUrl());
+
 });
