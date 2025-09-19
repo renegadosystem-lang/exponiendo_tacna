@@ -1985,45 +1985,17 @@ button.search-result-item {
     opacity: 0.6;
 }
 
-/*
-=================================================================
-  CORRECCIÓN FINAL DE Z-INDEX (Añadir al final de style.css)
-=================================================================
-*/
-
-/* Damos una prioridad altísima a los paneles para que floten sobre todo */
-#notifications-panel,
-#chat-preview-panel {
-    z-index: 9997;
-}
-
-/* Los modales deben ir encima de los paneles */
-.modal {
-    z-index: 9998;
-}
-
-/* Las alertas y confirmaciones deben ser lo más importante */
-#confirm-modal,
-#alert-modal {
-    z-index: 9999;
-}
-
-/* Y el contenedor de toasts, por encima de todo */
-#toast-container {
-    z-index: 10000;
-
-}
-
 /* =================================================================
-  SOLUCIÓN DEFINITIVA PARA CONFLICTO DE Z-INDEX EN CHAT.HTML
+  SOLUCIÓN DIAGNÓSTICA FINAL PARA EL CONFLICTO EN CHAT.HTML
 ================================================================= */
 
+/*
+  Forzamos al header a ser un bloque estático normal y sin
+  propiedades de apilamiento, únicamente en la página de chat.
+  Esto elimina 100% el conflicto de renderizado.
+*/
 body.chat-page .main-header {
-    /*
-      Anulamos el z-index del header SOLAMENTE en la página de chat.
-      Esto previene que cree un contexto de apilamiento conflictivo
-      con el layout especial de esa página. El header seguirá siendo
-      "sticky" pero ya no se superpondrá a los paneles.
-    */
+    position: static;
     z-index: auto;
+    backdrop-filter: none;
 }
