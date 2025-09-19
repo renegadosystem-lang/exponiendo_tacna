@@ -2014,34 +2014,22 @@ button.search-result-item {
 }
 
 /* =================================================================
-  SOLUCIÓN FORZADA PARA CONFLICTO DE CAPAS DE RENDERIZADO
-================================================================= */
-#search-modal,
-#notifications-panel,
-#chat-preview-panel,
-#confirm-modal,
-#alert-modal,
-#manage-album-modal,
-#report-album-modal,
-#report-comment-modal {
-    /* Este "truco" fuerza al navegador a crear una nueva capa de renderizado 
-       para estos elementos, dándoles prioridad sobre el header. */
-    transform: translateZ(0);
-}
-
-/* =================================================================
-  SOLUCIÓN DE LAYOUT FLEXBOX PARA LA PÁGINA DE CHAT
+  SOLUCIÓN FINAL DE "FUERZA BRUTA" PARA PÁGINA DE CHAT
 ================================================================= */
 
-/* Hacemos que el body sea un contenedor flexible vertical */
-body.chat-page {
-    display: flex;
-    flex-direction: column;
-    height: 100vh; /* Ocupa toda la altura de la ventana */
+body.chat-page .main-header {
+    z-index: 100 !important;
 }
 
-/* Hacemos que el contenedor del chat crezca para llenar el espacio sobrante */
 body.chat-page .chat-main-container {
-    flex-grow: 1;
+    z-index: 1 !important;
 }
 
+body.chat-page #search-modal,
+body.chat-page #notifications-panel,
+body.chat-page #chat-preview-panel,
+body.chat-page #confirm-modal,
+body.chat-page #alert-modal {
+    z-index: 99999 !important;
+    transform: translateZ(1px);
+}
