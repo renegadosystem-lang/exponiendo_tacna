@@ -1,7 +1,7 @@
 /*
 =================================================================
   STYLESHEET: EXPONIENDO TACNA (Versión Refactorizada)
-  AUTHOR: Lucifer 
+  AUTHOR: Lucifer
   DESCRIPTION: Estilos unificados para una experiencia de usuario consistente.
 =================================================================
 */
@@ -1865,28 +1865,26 @@ button.search-result-item {
 .chat-main-container {
     height: calc(100vh - 60px);
     width: 100%;
+    overflow: hidden;
     position: relative;
 }
 
-/* Lógica de transición CORREGIDA */
 .chat-view {
-    /* Por defecto, la vista está oculta y sin transform */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--dark-bg);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: -1;
-    transform: translateX(100%); /* La mandamos a la derecha por defecto */
+    display: flex;
+    flex-direction: column;
 }
 
+/* Lógica de transición */
 #conversations-view {
-    /* La vista de conversaciones por defecto estará a la izquierda */
     transform: translateX(-100%);
 }
-
-.chat-view.active {
-    /* La vista activa se muestra en pantalla y recupera su z-index */
-    transform: translateX(0);
-    z-index: 1;
-}
-
 #messages-view {
     transform: translateX(100%);
 }
@@ -1987,19 +1985,30 @@ button.search-result-item {
     opacity: 0.6;
 }
 
-/* =================================================================
-  SOLUCIÓN DIAGNÓSTICA FINAL PARA EL CONFLICTO EN CHAT.HTML
-================================================================= */
-
 /*
-  Forzamos al header a ser un bloque estático normal y sin
-  propiedades de apilamiento, únicamente en la página de chat.
-  Esto elimina 100% el conflicto de renderizado.
+=================================================================
+  CORRECCIÓN FINAL DE Z-INDEX (Añadir al final de style.css)
+=================================================================
 */
-body.chat-page .main-header {
-    position: static;
-    z-index: auto;
-    backdrop-filter: none;
+
+/* Damos una prioridad altísima a los paneles para que floten sobre todo */
+#notifications-panel,
+#chat-preview-panel {
+    z-index: 9997;
 }
 
+/* Los modales deben ir encima de los paneles */
+.modal {
+    z-index: 9998;
+}
 
+/* Las alertas y confirmaciones deben ser lo más importante */
+#confirm-modal,
+#alert-modal {
+    z-index: 9999;
+}
+
+/* Y el contenedor de toasts, por encima de todo */
+#toast-container {
+    z-index: 10000;
+}
