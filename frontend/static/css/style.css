@@ -1,7 +1,7 @@
 /*
 =================================================================
   STYLESHEET: EXPONIENDO TACNA (Versión Refactorizada)
-  AUTHOR: Lucifer & Gemini
+  AUTHOR: Lucifer 
   DESCRIPTION: Estilos unificados para una experiencia de usuario consistente.
 =================================================================
 */
@@ -2015,15 +2015,15 @@ button.search-result-item {
 }
 
 /* =================================================================
-  SOLUCIÓN DEFINITIVA PARA CONFLICTO DE TRANSFORM EN CHAT
+  SOLUCIÓN DEFINITIVA PARA CONFLICTO DE Z-INDEX EN CHAT.HTML
 ================================================================= */
 
-/*
-  Cuando un modal o panel del header está visible en la página de chat,
-  desactivamos temporalmente la transformación de la vista de chat activa.
-  Esto elimina el contexto de apilamiento conflictivo y permite
-  que el panel se muestre correctamente por encima de todo.
-*/
-body.chat-page:has(#search-modal.is-visible, #notifications-panel.visible, #chat-preview-panel.visible) .chat-view.active {
-    transform: none;
+body.chat-page .main-header {
+    /*
+      Anulamos el z-index del header SOLAMENTE en la página de chat.
+      Esto previene que cree un contexto de apilamiento conflictivo
+      con el layout especial de esa página. El header seguirá siendo
+      "sticky" pero ya no se superpondrá a los paneles.
+    */
+    z-index: auto;
 }
