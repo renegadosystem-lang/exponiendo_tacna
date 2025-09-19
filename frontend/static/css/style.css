@@ -1866,6 +1866,7 @@ button.search-result-item {
     width: 100%;
     overflow: hidden;
     position: relative;
+    z-index: 0; /* <--- AÑADE ESTA LÍNEA */
 }
 
 .chat-view {
@@ -2028,4 +2029,5 @@ button.search-result-item {
        para estos elementos, dándoles prioridad sobre el header. */
     transform: translateZ(0);
 }
+
 
