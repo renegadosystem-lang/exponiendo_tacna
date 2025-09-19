@@ -1869,22 +1869,25 @@ button.search-result-item {
     position: relative;
 }
 
+/* Lógica de transición CORREGIDA */
 .chat-view {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--dark-bg);
+    /* Por defecto, la vista está oculta y sin transform */
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
+    z-index: -1;
+    transform: translateX(100%); /* La mandamos a la derecha por defecto */
 }
 
-/* Lógica de transición */
 #conversations-view {
+    /* La vista de conversaciones por defecto estará a la izquierda */
     transform: translateX(-100%);
 }
+
+.chat-view.active {
+    /* La vista activa se muestra en pantalla y recupera su z-index */
+    transform: translateX(0);
+    z-index: 1;
+}
+
 #messages-view {
     transform: translateX(100%);
 }
@@ -1999,3 +2002,4 @@ body.chat-page .main-header {
     z-index: auto;
     backdrop-filter: none;
 }
+
