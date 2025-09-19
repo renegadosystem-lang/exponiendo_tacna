@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupForms() {
     const registerForm = document.getElementById('register-form');
     const loginForm = document.getElementById('login-form');
-    const loginModal = document.getElementById('login-modal'); // <-- NUEVO
-    const paymentModal = document.getElementById('payment-modal'); // <-- NUEVO
+    const loginModal = document.getElementById('login-modal');
+    const paymentModal = document.getElementById('payment-modal');
 
     if (loginForm) {
         const errorMessageDiv = document.getElementById('login-error-message');
@@ -31,39 +31,40 @@ function setupForms() {
             const username = e.target.username.value;
             const password = e.target.password.value;
 
-            fetch(`${window.backendUrl}/api/login`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ username, password }) 
+            fetch(`${window.backendUrl}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             })
-            .then(async response => { // <-- Añadimos async
-                const data = await response.json(); // Leemos el JSON en cualquier caso
+            .then(async response => {
+                const data = await response.json();
                 if (!response.ok) {
-                    // --- INICIO DE LA NUEVA LÓGICA ---
+                    // Si la respuesta no es exitosa, manejamos el error aquí
                     if (data.error === 'pending_approval') {
-                        // Si el error es de aprobación pendiente...
-                        loginModal.classList.remove('is-visible'); // Ocultamos el modal de login
-                        paymentModal.classList.add('is-visible'); // Mostramos el modal de pago
+                        loginModal.classList.remove('is-visible');
+                        paymentModal.classList.add('is-visible');
+                        // Devolvemos una promesa rechazada para detener la cadena
+                        return Promise.reject(null); // Usamos null para que no se muestre en la consola
                     } else {
-                        // Para cualquier otro error, mostramos el mensaje normal
+                        // Para otros errores, lanzamos el mensaje
                         throw new Error(data.error || 'Error desconocido');
                     }
-                    // --- FIN DE LA NUEVA LÓGICA ---
                 }
-                return data; 
+                // Si la respuesta fue exitosa, pasamos los datos al siguiente .then()
+                return data;
             })
-            .then(data => { 
-                if (data) { // Solo si la respuesta fue exitosa
-                    localStorage.setItem('accessToken', data.access_token); 
-                    localStorage.setItem('username', data.username);
-                    localStorage.setItem('is_admin', data.is_admin); // Guardamos el estado de admin
-                    if (data.profile_picture_url) {
-                        localStorage.setItem('profile_picture_url', data.profile_picture_url);
-                    }
-                    window.location.href = '/dashboard.html'; 
+            .then(data => {
+                // Este bloque AHORA solo se ejecutará si el login fue 100% exitoso
+                localStorage.setItem('accessToken', data.access_token);
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('is_admin', data.is_admin);
+                if (data.profile_picture_url) {
+                    localStorage.setItem('profile_picture_url', data.profile_picture_url);
                 }
+                window.location.href = '/dashboard.html';
             })
-            .catch(error => { 
+            .catch(error => {
+                // El .catch ahora solo mostrará errores reales, no el de "pago pendiente"
                 if (error) {
                     showError(errorMessageDiv, error.message || 'No se pudo conectar con el servidor.');
                 }
@@ -151,4 +152,5 @@ function showMessage(element, message, type) {
     element.textContent = message; 
     element.className = type === 'success' ? 'success-message' : 'error-message'; 
     element.style.display = 'block'; 
+
 }
