@@ -2084,4 +2084,31 @@ button.search-result-item {
 .user-search-item span {
     font-size: 1rem;
     font-weight: 600;
+
+}
+
+/* =================================================================
+  AJUSTES PARA EL MODAL DE PAGO
+================================================================= */
+
+#payment-modal .modal-content {
+    /* Limitamos la altura máxima del modal */
+    max-height: 90vh;
+    /* Hacemos que el contenido interno sea flexible y vertical */
+    display: flex;
+    flex-direction: column;
+}
+
+#payment-modal .modal-content-scrollable {
+    /* Hacemos que esta nueva capa interna sea la que tenga scroll */
+    overflow-y: auto;
+    /* Pequeño padding para que el scroll no pegue al borde */
+    padding: 0 1rem;
+    margin: 0 -1rem; /* Truco para que el padding no afecte el ancho */
+}
+
+#payment-modal .modal-content p {
+    /* Reducimos el espacio entre los párrafos */
+    margin-bottom: 0.8rem;
+    margin-top: 0.8rem;
 }
