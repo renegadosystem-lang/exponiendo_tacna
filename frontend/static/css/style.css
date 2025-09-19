@@ -2012,3 +2012,76 @@ button.search-result-item {
 #toast-container {
     z-index: 10000;
 }
+
+/* =================================================================
+  NUEVOS ESTILOS PARA BÚSQUEDA DE USUARIOS INTEGRADA EN CHAT
+================================================================= */
+
+/* Contenedor principal de la búsqueda, oculto por defecto */
+#user-search-view {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Cuando se activa la búsqueda, se muestra este contenedor */
+#conversations-view.is-searching #user-search-view {
+    display: flex;
+}
+
+/* ... y se oculta la lista de conversaciones normal */
+#conversations-view.is-searching .view-header,
+#conversations-view.is-searching .conversations-list {
+    display: none;
+}
+
+.user-search-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--content-bg);
+}
+
+#user-search-input {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    padding: 0.5rem;
+}
+
+#user-search-input:focus {
+    outline: none;
+}
+
+#user-search-results {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.user-search-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.user-search-item:hover {
+    background-color: var(--content-bg-light);
+}
+
+.user-search-item img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-search-item span {
+    font-size: 1rem;
+    font-weight: 600;
+}
