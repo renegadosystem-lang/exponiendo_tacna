@@ -1862,11 +1862,10 @@ button.search-result-item {
 .chat-page main { padding: 0; }
 
 .chat-main-container {
-    height: calc(100vh - 60px);
     width: 100%;
     overflow: hidden;
     position: relative;
-    z-index: 0; /* <--- AÑADE ESTA LÍNEA */
+    z-index: 0;
 }
 
 .chat-view {
@@ -2030,4 +2029,19 @@ button.search-result-item {
     transform: translateZ(0);
 }
 
+/* =================================================================
+  SOLUCIÓN DE LAYOUT FLEXBOX PARA LA PÁGINA DE CHAT
+================================================================= */
+
+/* Hacemos que el body sea un contenedor flexible vertical */
+body.chat-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa toda la altura de la ventana */
+}
+
+/* Hacemos que el contenedor del chat crezca para llenar el espacio sobrante */
+body.chat-page .chat-main-container {
+    flex-grow: 1;
+}
 
