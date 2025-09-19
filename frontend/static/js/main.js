@@ -265,7 +265,10 @@ function initializeGlobalEventListeners() {
 
 window.initializeGlobalEventListeners = initializeGlobalEventListeners;
 
-// El DOMContentLoaded ahora está vacío aquí. Cada página es responsable de llamar a la inicialización.
+// Se asegura de que los listeners globales se activen en CUALQUIER página que incluya este script.
 document.addEventListener('DOMContentLoaded', () => {
-    // No hacer nada aquí globalmente.
+    // Solo ejecuta si la función existe (para no dar error en index.html)
+    if (window.initializeGlobalEventListeners) {
+        window.initializeGlobalEventListeners();
+    }
 });
