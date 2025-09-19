@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administrador - Exponiendo Tacna</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        /* Estilos específicos para el panel de admin */
+        .admin-container { padding: 2rem; max-width: 1400px; margin: auto; }
+        .admin-section { background-color: var(--content-bg); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem; }
+        .user-table { width: 100%; border-collapse: collapse; }
+        .user-table th, .user-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .user-table th { color: var(--primary-color); }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-dot.active { background-color: #28a745; box-shadow: 0 0 8px #28a745; }
+        .status-dot.inactive { background-color: #6c757d; }
+    </style>
+</head>
+<body class="dashboard-page">
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/dashboard.html" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <a href="/dashboard.html" class="btn btn-secondary">Dashboard</a>
+                <a href="#" id="logout-btn" class="btn btn-secondary">Cerrar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="admin-panel" style="display: none;">
+        <div class="admin-container">
+            <h1>Panel de Administrador</h1>
+            
+            <div class="admin-section">
+                <h2>Usuarios Pendientes de Aprobación</h2>
+                <div id="pending-users-list"></div>
+            </div>
+
+            <div class="admin-section">
+                <h2>Todos los Usuarios</h2>
+                <div id="all-users-list"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>
