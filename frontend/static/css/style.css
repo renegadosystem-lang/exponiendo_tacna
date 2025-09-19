@@ -1865,7 +1865,6 @@ button.search-result-item {
 .chat-main-container {
     height: calc(100vh - 60px);
     width: 100%;
-    overflow: hidden;
     position: relative;
 }
 
@@ -2002,4 +2001,5 @@ body.chat-page .main-header {
     z-index: auto;
     backdrop-filter: none;
 }
+
 
