@@ -227,28 +227,28 @@ def register():
     db.session.commit()
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
+# REEMPLAZA LA FUNCIÓN LOGIN ENTERA EN app.py CON ESTA VERSIÓN
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data.get('username')).first()
+
     if user and user.check_password(data.get('password')):
-        # --- INICIO DE LA NUEVA LÓGICA ---
-        if not user.is_approved:
-            # Si el usuario no está aprobado, devolvemos un error específico
-            return jsonify({"error": "pending_approval"}), 403 # 403 Forbidden
-        # --- FIN DE LA NUEVA LÓGICA ---
+        if not user.is_approved and not user.is_admin: # Los admins pueden entrar sin estar aprobados
+            return jsonify({"error": "pending_approval"}), 403
+
+        # Creamos el token SÓLO con la identidad del usuario
         access_token = create_access_token(identity=str(user.id))
-        
-        # --- INICIO DE LA CORRECCIÓN ---
-        # Ahora también devolvemos la URL de la foto de perfil
         profile_picture_url = get_public_url(user.profile_picture_path)
+
+        # Devolvemos el token y los datos adicionales en un solo JSON
         return jsonify(
-            access_token=access_token, 
+            access_token=access_token,
             username=user.username,
             profile_picture_url=profile_picture_url,
-            is_admin=user.is_admin # <-- NUEVO
+            is_admin=user.is_admin
         ), 200
-        # --- FIN DE LA CORRECCIÓN ---
 
     return jsonify({"error": "Usuario o contraseña inválidos"}), 401
     
@@ -977,4 +977,5 @@ def handle_private_message(data):
 #  7. PUNTO DE ENTRADA PRINCIPAL
 # =========================================================================
 if __name__ == '__main__':
+
     socketio.run(app, debug=True)
