@@ -1,4 +1,4 @@
-// /static/js/chat.js (Versión con Búsqueda Integrada)
+// /static/js/chat.js (Versión con Búsqueda Integrada y Deselección)
 
 document.addEventListener('DOMContentLoaded', () => {
     // Activamos los listeners globales de main.js
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('message-input');
     const sendMessageBtn = document.getElementById('send-message-btn');
     const backToConversationsBtn = document.getElementById('back-to-conversations');
-    const newChatBtn = document.getElementById('new-chat-btn'); // El botón del lápiz
+    const newChatBtn = document.getElementById('new-chat-btn');
 
     let currentUserId = null;
     let activeChatUserId = null;
@@ -31,9 +31,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- NUEVA LÓGICA PARA BÚSQUEDA DE USUARIOS ---
+    // --- NUEVA LÓGICA DE USABILIDAD ---
+    // Función para quitar la clase .active de cualquier conversación
+    const deselectAllConversations = () => {
+        document.querySelectorAll('.conversation-item-v3.active').forEach(el => {
+            el.classList.remove('active');
+        });
+    };
 
-    // HTML para la nueva vista de búsqueda
+    // Listener para deseleccionar al hacer clic afuera
+    document.body.addEventListener('click', (e) => {
+        // Si el clic NO fue dentro de la lista de conversaciones NI en el header del chat
+        if (!e.target.closest('.conversations-list') && !e.target.closest('.chat-header-v3')) {
+            deselectAllConversations();
+        }
+    });
+
+    // Listener para deseleccionar con la tecla Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") {
+            deselectAllConversations();
+        }
+    });
+    // --- FIN DE LA NUEVA LÓGICA ---
+
+
+    // --- LÓGICA PARA BÚSQUEDA DE USUARIOS ---
     const userSearchHTML = `
         <div id="user-search-view">
             <div class="user-search-header">
@@ -45,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
     `;
-    // Inyectamos el HTML de la búsqueda dentro del panel de conversaciones
     conversationsView.insertAdjacentHTML('beforeend', userSearchHTML);
 
     const userSearchView = document.getElementById('user-search-view');
@@ -54,20 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const backFromSearchBtn = document.getElementById('back-to-convos-from-search');
     let searchTimeout;
 
-    // El lápiz ahora activa/desactiva la vista de búsqueda
     newChatBtn.addEventListener('click', () => {
         conversationsView.classList.add('is-searching');
         userSearchInput.focus();
     });
 
-    // El botón de regreso en la búsqueda nos devuelve a la lista de chats
     backFromSearchBtn.addEventListener('click', () => {
         conversationsView.classList.remove('is-searching');
         userSearchInput.value = '';
         userSearchResults.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 2rem;">Escribe un nombre para buscar.</p>';
     });
 
-    // Lógica de búsqueda en tiempo real
     userSearchInput.addEventListener('input', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
@@ -95,25 +114,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    // Event listener para iniciar chat desde los resultados de búsqueda
     userSearchResults.addEventListener('click', e => {
         const userItem = e.target.closest('.user-search-item');
         if (!userItem) return;
 
         const userInfo = JSON.parse(userItem.dataset.userInfo);
         
-        // Ocultar la vista de búsqueda
         conversationsView.classList.remove('is-searching');
         userSearchInput.value = '';
 
-        // Comprobar si ya existe una conversación con este usuario
         const existingConvo = allConversations.find(c => c.other_user.id === userInfo.id);
 
         if (existingConvo) {
-            // Si ya existe, simplemente la abrimos
             loadMessages(existingConvo.other_user);
         } else {
-            // Si no existe, creamos un objeto 'other_user' y abrimos un chat nuevo
             const newUserChat = {
                 id: userInfo.id,
                 username: userInfo.username,
@@ -122,9 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loadMessages(newUserChat);
         }
     });
-
-
-    // --- LÓGICA DE CHAT EXISTENTE (sin cambios) ---
 
     const socket = io(window.backendUrl);
     socket.on('connect', () => socket.emit('authenticate', { token }));
@@ -165,7 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHeader.style.display = 'flex';
         messageForm.style.display = 'flex';
         
-        document.querySelectorAll('.conversation-item-v3.active').forEach(el => el.classList.remove('active'));
+        // Al cargar un nuevo mensaje, primero deseleccionamos todos los demás
+        deselectAllConversations();
+        // Luego, seleccionamos el actual
         const partnerEl = document.querySelector(`.conversation-item-v3[data-user-id="${otherUser.id}"]`);
         if (partnerEl) partnerEl.classList.add('active');
 
