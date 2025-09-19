@@ -2011,4 +2011,19 @@ button.search-result-item {
 /* Y el contenedor de toasts, por encima de todo */
 #toast-container {
     z-index: 10000;
+
+}
+
+/* =================================================================
+  SOLUCIÓN DEFINITIVA PARA CONFLICTO DE TRANSFORM EN CHAT
+================================================================= */
+
+/*
+  Cuando un modal o panel del header está visible en la página de chat,
+  desactivamos temporalmente la transformación de la vista de chat activa.
+  Esto elimina el contexto de apilamiento conflictivo y permite
+  que el panel se muestre correctamente por encima de todo.
+*/
+body.chat-page:has(#search-modal.is-visible, #notifications-panel.visible, #chat-preview-panel.visible) .chat-view.active {
+    transform: none;
 }
