@@ -1,7 +1,7 @@
 /*
 =================================================================
   STYLESHEET: EXPONIENDO TACNA (Versión Refactorizada)
-  AUTHOR: Lucifer & Gemini
+  AUTHOR: Lucifer
   DESCRIPTION: Estilos unificados para una experiencia de usuario consistente.
 =================================================================
 */
@@ -2011,5 +2011,21 @@ button.search-result-item {
 /* Y el contenedor de toasts, por encima de todo */
 #toast-container {
     z-index: 10000;
+}
+
+/* =================================================================
+  SOLUCIÓN FORZADA PARA CONFLICTO DE CAPAS DE RENDERIZADO
+================================================================= */
+#search-modal,
+#notifications-panel,
+#chat-preview-panel,
+#confirm-modal,
+#alert-modal,
+#manage-album-modal,
+#report-album-modal,
+#report-comment-modal {
+    /* Este "truco" fuerza al navegador a crear una nueva capa de renderizado 
+       para estos elementos, dándoles prioridad sobre el header. */
+    transform: translateZ(0);
 }
 
