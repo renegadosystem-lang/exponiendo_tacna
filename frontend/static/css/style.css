@@ -1,7 +1,7 @@
 /*
 =================================================================
   STYLESHEET: EXPONIENDO TACNA (Versión Refactorizada)
-  AUTHOR: Lucifer & Gemini
+  AUTHOR: Lucifer
   DESCRIPTION: Estilos unificados para una experiencia de usuario consistente.
 =================================================================
 */
@@ -2111,4 +2111,34 @@ button.search-result-item {
     /* Reducimos el espacio entre los párrafos */
     margin-bottom: 0.8rem;
     margin-top: 0.8rem;
+}
+
+/* =================================================================
+  AJUSTES PARA BOTÓN "VER PERFIL" EN BÚSQUEDA
+================================================================= */
+
+.search-result-item {
+    justify-content: space-between;
+}
+
+.search-result-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-result-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-result-actions .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.search-result-link {
+    color: var(--text-color);
+    font-size: 1.1rem;
 }
