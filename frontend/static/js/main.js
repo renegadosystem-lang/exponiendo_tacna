@@ -73,10 +73,23 @@ function initializeGlobalEventListeners() {
     };
 
     const renderSearchResults = (results) => {
-        if (!searchResultsContainer) return;
-        let html = '<h4>Usuarios</h4>';
-        if (results.users && results.users.length) {
-            html += results.users.map(u => `<div class="search-result-item"><span>@${u.username}</span><button class="btn btn-secondary start-chat" data-user-info='{"id": ${u.id}, "username": "${u.username}", "avatar": "${u.profile_picture_url}"}'>Chat</button></div>`).join('');
+    if (!searchResultsContainer) return;
+    let html = '<h4>Usuarios</h4>';
+    if (results.users && results.users.length) {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        html += results.users.map(u => `
+            <div class="search-result-item">
+                <div class="search-result-info">
+                    <img src="${u.profile_picture_url || '/static/img/placeholder-default.jpg'}" alt="${u.username}">
+                    <span>@${u.username}</span>
+                </div>
+                <div class="search-result-actions">
+                    <a href="/profile.html?user=${u.username}" class="btn btn-secondary">Ver Perfil</a>
+                    <button class="btn btn-primary start-chat" data-user-info='${JSON.stringify(u)}'>Chat</button>
+                </div>
+            </div>
+        `).join('');
+        // --- FIN DE LA MODIFICACIÓN ---
         } else {
             html += '<p>No se encontraron usuarios.</p>';
         }
@@ -268,4 +281,5 @@ window.initializeGlobalEventListeners = initializeGlobalEventListeners;
 // El DOMContentLoaded ahora está vacío aquí. Cada página es responsable de llamar a la inicialización.
 document.addEventListener('DOMContentLoaded', () => {
     // No hacer nada aquí globalmente.
+
 });
