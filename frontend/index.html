@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Exponiendo Tacna</title>
+
+    <meta property="og:title" content="Exponiendo Tacna - Tu Archivo Privado">
+    <meta property="og:description" content="Descubre, colecciona y organiza contenido exclusivo. Únete a nuestra comunidad y empieza a explorar.">
+    <meta property="og:image" content="https://exponiendotacna.netlify.app/static/img/hero-background.jpg">
+    <meta property="og:url" content="https://exponiendotacna.netlify.app/">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    </head>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero-section {
+            background-image: url('/static/img/hero-background.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="/" class="logo">Exponiendo Tacna</a>
+            <nav class="main-nav">
+                <a href="#registro" class="btn btn-primary">Crear Cuenta</a>
+                <a href="#" data-modal-target="#login-modal" class="btn btn-secondary">Iniciar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <h1>Tu Archivo Privado de Momentos Íntimos</h1>
+                <p>Descubre, colecciona y organiza contenido exclusivo. Únete a nuestra comunidad y empieza a explorar.</p>
+                <a href="#registro" class="btn btn-primary btn-lg">Únete Gratis</a>
+            </div>
+        </section>
+
+        <section class="featured-albums">
+            <div class="container">
+                <h2 class="section-title">Los Más Vistos de la Comunidad</h2>
+                <p class="section-subtitle">El contenido que está marcando tendencia ahora mismo.</p>
+                <div class="album-grid" id="album-grid-container">
+                    <p class="loading-message">Cargando los álbumes más populares...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="container">
+                <h2 class="section-title">Todas las Herramientas que Necesitas</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <h3>🖼️ Crea Álbumes</h3>
+                        <p>Organiza tu contenido en álbumes temáticos. Fácil de crear, fácil de compartir con quien tú decidas.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>#️⃣ Etiqueta tu Contenido</h3>
+                        <p>Usa etiquetas para encontrar y clasificar tus fotos y videos. La búsqueda avanzada te permite filtrar por lo que más te gusta.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔒 Control Total</h3>
+                        <p>Tú decides quién ve tu contenido. Gestiona tus álbumes y tu perfil con total privacidad y seguridad.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="registro" class="cta-section">
+            <div class="container">
+                <h2>¿Listo para Empezar?</h2>
+                <p>Crea tu cuenta gratuita y obtén acceso instantáneo a todas las funcionalidades. Sube tu propio contenido, explora el de otros y únete a la conversación.</p>
+                
+                <form id="register-form" class="register-form">
+                    <div id="register-message" style="display: none;"></div>
+                    <input type="text" name="username" placeholder="Nombre de usuario" required>
+                    <input type="email" name="email" placeholder="Correo electrónico" required>
+                    <input type="password" name="password" placeholder="Contraseña" required>
+                    <button type="submit" class="btn btn-primary btn-lg">Crear Mi Cuenta Ahora</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2025 Exponiendo Tacna. Todos los derechos reservados.</p>
+            <nav class="footer-nav">
+                <a href="#" data-modal-target="#terms-modal">Términos de Servicio</a>
+                <a href="#" data-modal-target="#privacy-modal">Política de Privacidad</a>
+                <a href="#" data-modal-target="#contact-modal">Contacto</a>
+            </nav>
+        </div>
+    </footer>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <form id="login-form">
+                <div id="login-error-message" class="error-message" style="display: none;"></div>
+                <input type="text" name="username" placeholder="Nombre de usuario" required>
+                <input type="password" name="password" placeholder="Contraseña" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <h2>Acceso Pendiente de Aprobación</h2>
+        
+        <div class="modal-content-scrollable">
+            <p>Gracias por registrarte. Para obtener acceso permanente a la comunidad, se requiere un pago único de <strong>S/ 30.00 soles</strong>.</p>
+            <p>Por favor, realiza el pago escaneando el siguiente código QR con Yape.</p>
+            <img src="/static/img/qr-yape.jpg" alt="Código QR de Yape" style="max-width: 250px; margin: 1rem auto; border-radius: var(--border-radius);">
+            <p>Una vez realizado el pago, envía una captura de pantalla a nuestra cuenta de Instagram para que podamos activar tu cuenta:</p>
+            
+            <a href="https://www.instagram.com/luciferbersebu05/" target="_blank" rel="noopener noreferrer" class="contact-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                <span>@luciferbersebu05</span>
+            </a>
+            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Tu acceso será activado tan pronto como verifiquemos tu pago. ¡Gracias por tu apoyo!</p>
+        </div>
+    </div>
+</div>
+
+    <div id="terms-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Términos de Servicio y Exención de Responsabilidad</h2>
+            <div class="terms-content">
+                <p><strong>Uso exclusivo para mayores de 18 años.</strong> Al acceder a este sitio, confirmas ser mayor de edad en tu jurisdicción.</p>
+                <p>Para compartir cualquier contenido, el usuario declara y garantiza que tiene el permiso explícito y verificable de todas las personas que aparecen en dicho contenido.</p>
+                <hr>
+                <h3>Política de Tolerancia Cero Contra el Abuso Infantil</h3>
+                <p>Este sitio web tiene una política de <strong>tolerancia cero, absoluta e innegociable</strong>, contra la pornografía infantil y cualquier forma de explotación o abuso de menores. La distribución de este material es un <strong>delito grave</strong>.</p>
+                <p>Cualquier usuario que suba o comparta este tipo de contenido será <strong>expulsado permanentemente</strong> y <strong>denunciado a las autoridades</strong> legales, entregando toda la información de registro disponible.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Política de Privacidad</h2>
+            <div class="terms-content">
+                <p><strong>Tu privacidad es nuestra prioridad.</strong> Nos comprometemos a proteger tus datos y a garantizar tu anonimato.</p>
+                <p><strong>1. Datos Recopilados:</strong> Únicamente almacenamos tu nombre de usuario, correo electrónico y contraseña encriptada. Te animamos a usar un seudónimo para maximizar tu anonimato.</p>
+                <p><strong>2. Seguridad:</strong> Utilizamos encriptación y las mejores prácticas de seguridad para proteger tu información. Tu contraseña se almacena de forma segura (hashed) y es inaccesible para nosotros.</p>
+                <p><strong>3. No Compartimos tus Datos:</strong> Jamás venderemos o compartiremos tu información con terceros, excepto en caso de una orden judicial o para cooperar con autoridades en la investigación de actividades ilegales graves.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Contacto</h2>
+            <div class="contact-content">
+                <p>Para reportes, sugerencias o cualquier consulta, contáctanos a través de nuestra cuenta oficial de Instagram.</p>
+                <a href="https://www.instagram.com/luciferbersebu05/" target="_blank" rel="noopener noreferrer" class="contact-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    <span>@luciferbersebu05</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+    <div id="alert-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="alert-title">Aviso</h2>
+            <p id="alert-message"></p>
+            <button id="alert-ok-btn" class="btn btn-primary">Aceptar</button>
+        </div>
+    </div>
+
+    <script src="/static/js/utils.js?v=final"></script>
+    <script src="/static/js/main.js?v=final"></script>
+    <script src="/static/js/index.js?v=final"></script>
+</body>
+
+</html>
+
+
