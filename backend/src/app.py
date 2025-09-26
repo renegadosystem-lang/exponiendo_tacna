@@ -34,7 +34,7 @@ app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 origins = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
-    ""https://exponiendotacna.onrender.com""
+    "https://exponiendotacna.onrender.com"
 ]
 CORS(app, resources={r"/api/*": {"origins": origins}})
 socketio = SocketIO(app, cors_allowed_origins=origins)
@@ -979,4 +979,5 @@ def handle_private_message(data):
 if __name__ == '__main__':
 
     socketio.run(app, debug=True)
+
 
